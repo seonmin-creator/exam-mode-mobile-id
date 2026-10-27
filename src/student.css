@@ -1,0 +1,191 @@
+/* ─────────────────────────────────────────────────────────────
+   응시자 화면 전용 스타일 (시험 모드 · 봉인 해제 · 종료)
+   ───────────────────────────────────────────────────────────── */
+
+/* 시험 모드에서는 화면을 꽉 채우고, 선택·길게 누르기 메뉴를 막는다 */
+body.exam {
+  background: #f3f6fb;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+body.exam .page-header { display: none; }
+body.exam main { padding: 12px 16px 20px; }
+
+/* 봉인 해제: 화면 전체 빨간색 */
+body.exam.broken { background: var(--bad); }
+
+.seal-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ok);
+  background: var(--ok-soft);
+  border-radius: 999px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.seal-status::before {
+  content: '';
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+body.broken .seal-status { color: #fff; background: rgba(0, 0, 0, 0.25); }
+
+@keyframes pulse { 50% { opacity: 0.25; } }
+
+/* 신분증 카드 */
+.id-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: #fff;
+  border: 2px solid var(--navy);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.id-card img { width: 78px; height: 98px; border-radius: 8px; flex: none; position: relative; }
+.id-card dl { margin: 0; position: relative; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+.id-card dt { color: var(--muted); font-size: 14px; align-self: center; }
+.id-card dd { margin: 0; font-weight: 700; font-size: 17px; }
+.id-card dd.name { font-size: 24px; color: var(--navy-dark); }
+.id-card .tag {
+  position: absolute; top: 8px; right: 10px;
+  font-size: 12px; font-weight: 700; color: var(--navy);
+}
+
+/* 은은하게 움직이는 워터마크: 캡처(정지 이미지)가 아니라 실시간 화면임을 보여 줌 */
+.watermark {
+  position: absolute;
+  inset: -40px;
+  background-repeat: repeat;
+  background-size: 220px 70px;
+  opacity: 0.13;
+  pointer-events: none;
+  animation: drift 9s linear infinite, breathe 4s ease-in-out infinite;
+}
+@keyframes drift {
+  from { background-position: 0 0; }
+  to { background-position: 220px 70px; }
+}
+@keyframes breathe { 50% { opacity: 0.22; } }
+
+/* QR 상자 (워터마크 없이 흰 바탕 → 스캔이 잘 되게) */
+.qr-box {
+  background: #fff;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  margin-top: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.qr-box canvas { width: 230px !important; height: 230px !important; display: block; margin: 0 auto; }
+.qr-meta { font-size: 15px; color: var(--muted); margin-top: 4px; }
+.qr-meta b { color: var(--navy); font-size: 18px; }
+.qr-bar { height: 5px; background: #eef1f5; border-radius: 3px; overflow: hidden; margin: 6px auto 0; max-width: 230px; }
+.qr-bar i { display: block; height: 100%; background: var(--navy); transition: width 1s linear; }
+
+/* 시각 표시 */
+.clock-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.clock-row div {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+.clock-row strong {
+  display: block;
+  font-size: 24px;
+  color: var(--navy-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 봉인 해제 안내 */
+.broken-info {
+  margin-top: 12px;
+  background: #fff;
+  color: var(--bad);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  font-weight: 700;
+}
+.broken-info strong { display: block; font-size: 26px; }
+
+/* 3초 길게 누르기 버튼 */
+.hold-button {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  margin-top: 14px;
+  border: 2px solid var(--navy);
+  background: #fff;
+  color: var(--navy);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 14px;
+  touch-action: none;
+}
+.hold-button span { position: relative; z-index: 1; }
+.hold-fill {
+  position: absolute; inset: 0 auto 0 0;
+  width: 0;
+  background: var(--navy-soft);
+}
+.hold-button.holding .hold-fill { width: 100%; transition: width 3s linear; }
+body.broken .hold-button { border-color: #fff; }
+
+/* 나가기 시도 가림막 */
+.blocker {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(16, 38, 74, 0.94);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  animation: fade-in 0.15s ease-out;
+}
+.blocker-box { color: #fff; text-align: center; max-width: 360px; }
+.blocker-box strong { display: block; font-size: 26px; }
+.blocker-box p { font-size: 16px; line-height: 1.6; opacity: 0.9; }
+.blocker-box .btn { background: #fff; color: var(--navy-dark); }
+@keyframes fade-in { from { opacity: 0; } }
+
+/* 앱 고정 켜는 방법 (펼치기) */
+.howto { margin-top: 6px; font-size: 14px; }
+.howto summary { color: var(--navy); font-weight: 700; cursor: pointer; }
+.howto p { margin: 6px 0 0; color: var(--muted); }
+
+/* 시험 종료 요약 */
+.result {
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 24px;
+}
+.result.ok { background: var(--ok-soft); color: var(--ok); }
+.result.bad { background: var(--bad-soft); color: var(--bad); }
+.result .small { font-weight: 600; margin-top: 6px; color: inherit; }
+
+.summary { margin: 14px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; }
+.summary dt { color: var(--muted); }
+.summary dd { margin: 0; font-weight: 700; }

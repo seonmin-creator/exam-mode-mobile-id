@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 150" role="img" aria-label="일러스트 아바타 2 (가상 인물)">
+  <!-- 실제 인물이 아닌 일러스트 아바타 -->
+  <rect width="120" height="150" fill="#e4f1ea"/>
+  <path d="M14 150c4-30 22-44 46-44s42 14 46 44z" fill="#2f6b55"/>
+  <rect x="50" y="86" width="20" height="24" rx="8" fill="#e9b994"/>
+  <circle cx="60" cy="64" r="28" fill="#f0c6a2"/>
+  <path d="M32 58c2-18 14-28 28-28 16 0 27 10 28 26-4-4-10-6-14-6l-4-8-6 8c-10 0-22 2-32 8z" fill="#1f1a17"/>
+  <rect x="44" y="62" width="12" height="8" rx="3" fill="none" stroke="#2b2b2b" stroke-width="2"/>
+  <rect x="64" y="62" width="12" height="8" rx="3" fill="none" stroke="#2b2b2b" stroke-width="2"/>
+  <line x1="56" y1="66" x2="64" y2="66" stroke="#2b2b2b" stroke-width="2"/>
+  <path d="M53 80h14" stroke="#a85d45" stroke-width="3" stroke-linecap="round"/>
+</svg>
