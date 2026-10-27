@@ -108,7 +108,7 @@ async function register(candidate) {
   for (let i = 0; i < actions.length; i++) {
     const mark = $(`#step-${i}`);
     mark.className = 'mark wait';
-    await sleep(400); // 단계가 눈에 보이도록 잠깐 쉼
+    await sleep(500); // 단계가 눈에 보이도록 잠깐 쉼
     await actions[i]();
     mark.className = 'mark ok';
     mark.textContent = '✓';

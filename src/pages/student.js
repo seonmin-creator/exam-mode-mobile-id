@@ -84,21 +84,18 @@ function showChecklist() {
         </li>
       </ul>
     </div>
-    <button class="btn" id="start-btn">시험 모드 시작</button>
+    <button class="btn" id="start-btn" disabled>시험 모드 시작</button>
     <p class="small">시험 모드를 시작한 뒤 다른 앱으로 이동하거나 통신이 연결되면 즉시 봉인이 해제되며, 되돌릴 수 없습니다.</p>`;
   setWatermark();
 
   const listeners = new AbortController(); // 화면을 떠날 때 감시를 한꺼번에 끄기 위함
   const { signal } = listeners;
 
-  // 네트워크: 실제 서비스에서는 '연결 없음'이어야 시작할 수 있다.
-  // 시연·심사에서 바로 체험할 수 있도록, 데모에서는 연결돼 있어도 경고만 하고 시작은 허용한다.
+  // 네트워크: navigator.onLine 이 false 여야 통과 (비행기 모드 + 와이파이 꺼짐)
   function checkNetwork() {
-    if (!navigator.onLine) {
-      setCheck('chk-net', 'ok', '연결 없음 (통과)');
-    } else {
-      setCheck('chk-net', 'warn', '연결됨 — 데모라서 그대로 시작할 수 있습니다. 실제 서비스에서는 비행기 모드가 필수입니다.');
-    }
+    const passed = !navigator.onLine;
+    setCheck('chk-net', passed, passed ? '연결 없음 (통과)' : '비행기 모드를 켜고 와이파이를 꺼 주세요');
+    $('#start-btn').disabled = !passed;
   }
   checkNetwork();
   window.addEventListener('online', checkNetwork, { signal });
@@ -110,14 +107,14 @@ function showChecklist() {
   });
 }
 
-// 체크리스트 한 줄의 표시(✓ 통과 / ! 경고)와 설명 바꾸기
-function setCheck(id, state, text) {
+// 체크리스트 한 줄의 표시(✓ / ✕)와 설명 바꾸기
+function setCheck(id, ok, text) {
   const mark = $(`#${id}`);
-  mark.className = `mark ${state}`;
-  mark.textContent = state === 'ok' ? '✓' : '!';
+  mark.className = `mark ${ok ? 'ok' : 'bad'}`;
+  mark.textContent = ok ? '✓' : '✕';
   const desc = $(`#${id}-desc`);
   desc.textContent = text;
-  desc.className = `desc ${state === 'ok' ? '' : 'warn'}`;
+  desc.className = `desc ${ok ? '' : 'bad'}`;
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -375,15 +372,7 @@ function showSummary() {
         <dt>봉인 유지</dt><dd>${formatDuration(sealEnd - seal.sealStart)}</dd>
       </dl>
     </div>
-    <button class="btn" id="again-btn">새 시험 시작</button>
-    <a class="btn secondary" href="./register.html">다른 응시자로 등록</a>`;
-
-  // 시험이 끝난 뒤에는 등록을 그대로 두고 새 시험을 바로 시작할 수 있다 (봉인 기록만 새로)
-  $('#again-btn').addEventListener('click', async () => {
-    seal = { status: 'ready' };
-    await dbSet('seal', seal);
-    showChecklist();
-  });
+    <a class="btn secondary" href="./test.html">데모 다시 하기 (테스트 도구에서 초기화)</a>`;
 }
 
 // ═════════════════════════════════════════════════════════════
