@@ -10,5 +10,5 @@ $('#reset-btn').addEventListener('click', async () => {
   await dbClear();
   const msg = $('#reset-msg');
   msg.hidden = false;
-  msg.textContent = '초기화했습니다. 응시자 화면에서 예비소집 등록부터 다시 할 수 있습니다.';
+  msg.textContent = '초기화했습니다. 처음 화면의 [응시자 등록]부터 다시 할 수 있습니다.';
 });

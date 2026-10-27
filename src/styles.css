@@ -153,6 +153,7 @@ p.lead { color: var(--muted); margin: 0 0 16px; }
 .mark.ok { background: var(--ok); color: #fff; }
 .mark.bad { background: var(--bad); color: #fff; }
 .mark.info { background: var(--navy-soft); color: var(--navy); }
+.mark.warn { background: var(--warn); color: #fff; }
 .mark.wait::after {
   content: '';
   width: 14px; height: 14px;
@@ -163,6 +164,7 @@ p.lead { color: var(--muted); margin: 0 0 16px; }
 .steps .title { font-weight: 700; }
 .steps .desc { font-size: 14px; color: var(--muted); }
 .steps .desc.bad { color: var(--bad); font-weight: 600; }
+.steps .desc.warn { color: var(--warn); font-weight: 600; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 

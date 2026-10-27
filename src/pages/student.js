@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
 // 응시자 화면
-//   ① 예비소집 등록 → ② 진입 조건 확인 → ③ 시험 모드(봉인) → ④ 시험 종료
+//   (등록은 register.html 에서) → ① 진입 확인 → ② 시험 모드(봉인) → ③ 시험 종료
 //
 // 봉인 상태(seal.status)
 //   'ready'  : 등록만 끝난 상태
@@ -9,11 +9,10 @@
 //   'ended'  : 시험 종료 (해제 기록이 있으면 releasedAt 이 남아 있음)
 // ─────────────────────────────────────────────────────────────
 import QRCode from 'qrcode';
-import { createDeviceKeyPair } from '../lib/crypto.js';
-import { issueCredential } from '../lib/issuer-mock.js';
 import { buildSignedQr } from '../lib/qr-payload.js';
 import { dbGet, dbSet } from '../lib/db.js';
-import { roster, findCandidate, assetUrl, formatTime, formatBirth, escapeHtml, $, sleep } from '../lib/util.js';
+import { unlockAlarm, playAlarm } from '../lib/alarm.js';
+import { findCandidate, assetUrl, formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
 
 const QR_INTERVAL = 5; // QR 갱신 주기 (초)
 const HOLD_MS = 3000; // 시험 종료 길게 누르기 3초
@@ -34,7 +33,7 @@ init().catch(showError);
 // ── 시작: 저장된 상태를 보고 알맞은 화면을 연다 ──
 async function init() {
   [deviceKeys, issued, seal] = await Promise.all([dbGet('device'), dbGet('credential'), dbGet('seal')]);
-  if (!deviceKeys || !issued) return showRegister();
+  if (!deviceKeys || !issued) return showNotRegistered();
   credential = JSON.parse(issued.credentialText);
 
   // 시험 모드 도중에 페이지가 다시 열렸다 = 새로고침했거나 앱을 나갔다 들어옴 → 봉인 해제
@@ -45,107 +44,21 @@ async function init() {
   showChecklist();
 }
 
-// ═════════════════════════════════════════════════════════════
-// ① 예비소집 등록
-// ═════════════════════════════════════════════════════════════
-function showRegister() {
+// 아직 이 폰에 등록된 응시자가 없을 때 → 등록 화면으로 안내
+function showNotRegistered() {
   app.innerHTML = `
-    <h2>① 예비소집 등록</h2>
-    <p class="lead">명단에서 본인을 선택하고 등록하세요. 이 폰에 모의 신분증이 발급됩니다.</p>
-    <form id="reg-form">
-      ${roster.candidates.map((c) => `
-        <label class="pick">
-          <input type="radio" name="examNo" value="${c.examNo}" required />
-          <img src="${assetUrl(c.photo)}" alt="" />
-          <div>
-            <strong>${escapeHtml(c.name)}</strong>
-            <span class="small">수험번호 ${c.examNo} · 좌석 ${c.seat}</span>
-            <span class="small">${escapeHtml(c.venue)}</span>
-          </div>
-        </label>`).join('')}
-      <button class="btn" type="submit" id="reg-btn" disabled>등록</button>
-    </form>`;
-
-  const form = $('#reg-form');
-  form.addEventListener('change', () => ($('#reg-btn').disabled = false));
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    register(findCandidate(new FormData(form).get('examNo'))).catch(showError);
-  });
-}
-
-const REGISTER_STEPS = [
-  { title: '기기 무결성 검증 (모의)', desc: '실제 앱에서는 Android Play Integrity / iOS App Attest로 검증합니다.' },
-  { title: '기기 키 생성', desc: '이 폰에서만 쓰는 서명 키를 만듭니다. 개인키는 폰 밖으로 꺼낼 수 없습니다.' },
-  { title: '모의 신분증 발급', desc: '발급기관 키로 서명합니다. (실제로는 정부 서버가 서명)' },
-  { title: '기기에 저장', desc: '기기 키와 신분증을 이 폰의 IndexedDB에 저장합니다.' },
-];
-
-async function register(candidate) {
-  app.innerHTML = `
-    <h2>① 예비소집 등록</h2>
-    <p class="lead">${escapeHtml(candidate.name)} 님의 모의 신분증을 발급하고 있습니다.</p>
-    <div class="card">
-      <ul class="steps">
-        ${REGISTER_STEPS.map((s, i) => `
-          <li>
-            <span class="mark" id="step-${i}"></span>
-            <div><div class="title">${s.title}</div><div class="desc">${s.desc}</div></div>
-          </li>`).join('')}
-      </ul>
-    </div>
-    <div id="reg-next"></div>`;
-
-  let keyPair;
-  let publicJwk;
-
-  // 단계별로 실제로 하는 일
-  const actions = [
-    // 1. 기기 무결성 검증: 웹에서는 할 수 없어 모의로 통과 처리
-    async () => {},
-    // 2. 기기 키쌍 생성
-    async () => {
-      const created = await createDeviceKeyPair();
-      keyPair = created.keyPair;
-      publicJwk = created.publicJwk;
-    },
-    // 3. 응시자 정보 + 기기 공개키에 발급기관이 서명
-    async () => {
-      const signed = await issueCredential(candidate, publicJwk);
-      issued = { ...signed, examNo: candidate.examNo };
-    },
-    // 4. 저장
-    async () => {
-      await dbSet('device', keyPair);
-      await dbSet('credential', issued);
-      await dbSet('seal', { status: 'ready' });
-    },
-  ];
-
-  for (let i = 0; i < actions.length; i++) {
-    const mark = $(`#step-${i}`);
-    mark.className = 'mark wait';
-    await sleep(500); // 단계가 눈에 보이도록 잠깐 쉼
-    await actions[i]();
-    mark.className = 'mark ok';
-    mark.textContent = '✓';
-  }
-
-  deviceKeys = keyPair;
-  credential = JSON.parse(issued.credentialText);
-  seal = { status: 'ready' };
-
-  $('#reg-next').innerHTML = '<button class="btn" id="go-check">다음: 진입 조건 확인</button>';
-  $('#go-check').addEventListener('click', showChecklist);
+    <h2>등록된 응시자가 없습니다</h2>
+    <p class="lead">먼저 응시자 등록(예비소집)을 해 주세요. 30초면 끝납니다.</p>
+    <a class="btn" href="./register.html">응시자 등록하러 가기</a>`;
 }
 
 // ═════════════════════════════════════════════════════════════
-// ② 진입 조건 확인
+// ① 진입 확인
 // ═════════════════════════════════════════════════════════════
 function showChecklist() {
   app.innerHTML = `
-    <h2>② 진입 조건 확인</h2>
-    <p class="lead">아래 조건을 모두 통과해야 시험 모드를 시작할 수 있습니다.</p>
+    <h2>① 시험 모드 준비</h2>
+    <p class="lead">아래 내용을 확인하고 시험 모드를 시작하세요.</p>
     ${idCardHtml()}
     <div class="card" style="margin-top:12px">
       <ul class="steps">
@@ -171,23 +84,21 @@ function showChecklist() {
         </li>
       </ul>
     </div>
-    <button class="btn" id="start-btn" disabled>시험 모드 시작</button>
+    <button class="btn" id="start-btn">시험 모드 시작</button>
     <p class="small">시험 모드를 시작한 뒤 다른 앱으로 이동하거나 통신이 연결되면 즉시 봉인이 해제되며, 되돌릴 수 없습니다.</p>`;
   setWatermark();
 
-  const passed = { network: false };
   const listeners = new AbortController(); // 화면을 떠날 때 감시를 한꺼번에 끄기 위함
   const { signal } = listeners;
 
-  function update() {
-    $('#start-btn').disabled = !passed.network;
-  }
-
-  // 네트워크: navigator.onLine 이 false 여야 통과 (비행기 모드 + 와이파이 꺼짐)
+  // 네트워크: 실제 서비스에서는 '연결 없음'이어야 시작할 수 있다.
+  // 시연·심사에서 바로 체험할 수 있도록, 데모에서는 연결돼 있어도 경고만 하고 시작은 허용한다.
   function checkNetwork() {
-    passed.network = !navigator.onLine;
-    setCheck('chk-net', passed.network, passed.network ? '연결 없음 (통과)' : '비행기 모드를 켜고 와이파이를 꺼 주세요');
-    update();
+    if (!navigator.onLine) {
+      setCheck('chk-net', 'ok', '연결 없음 (통과)');
+    } else {
+      setCheck('chk-net', 'warn', '연결됨 — 데모라서 그대로 시작할 수 있습니다. 실제 서비스에서는 비행기 모드가 필수입니다.');
+    }
   }
   checkNetwork();
   window.addEventListener('online', checkNetwork, { signal });
@@ -199,22 +110,23 @@ function showChecklist() {
   });
 }
 
-// 체크리스트 한 줄의 표시(✓ / ✕)와 설명 바꾸기
-function setCheck(id, ok, text) {
+// 체크리스트 한 줄의 표시(✓ 통과 / ! 경고)와 설명 바꾸기
+function setCheck(id, state, text) {
   const mark = $(`#${id}`);
-  mark.className = `mark ${ok ? 'ok' : 'bad'}`;
-  mark.textContent = ok ? '✓' : '✕';
+  mark.className = `mark ${state}`;
+  mark.textContent = state === 'ok' ? '✓' : '!';
   const desc = $(`#${id}-desc`);
   desc.textContent = text;
-  desc.className = `desc ${ok ? '' : 'bad'}`;
+  desc.className = `desc ${state === 'ok' ? '' : 'warn'}`;
 }
 
 // ═════════════════════════════════════════════════════════════
-// ③ 시험 모드
+// ② 시험 모드
 // ═════════════════════════════════════════════════════════════
 async function startExam() {
-  // 전체화면은 '버튼을 누른 그 순간'에만 요청할 수 있어서 가장 먼저 부른다.
+  // 전체화면과 소리는 '버튼을 누른 그 순간'에만 허락되므로 가장 먼저 부른다.
   requestFullscreen();
+  unlockAlarm();
 
   seal = { status: 'active', sealStart: Date.now(), releasedAt: null, releaseReason: null, endedAt: null };
   await dbSet('seal', seal); // 저장해 두면, 새로고침해도 '시험 중이었음'을 알 수 있다
@@ -260,7 +172,7 @@ function startLeaveGuards() {
   history.pushState({ exam: true }, '');
   window.addEventListener('popstate', () => {
     history.pushState({ exam: true }, '');
-    showBlocker();
+    showBlocker('warn');
   }, { signal });
 
   // 닫기·새로고침: 브라우저가 "페이지를 나가시겠습니까?" 확인창을 띄우게 한다.
@@ -270,25 +182,35 @@ function startLeaveGuards() {
   }, { signal });
 }
 
-// 가림막: 나가려는 시도를 막았다고 알려 주고 시험 화면으로 돌려보낸다.
-function showBlocker() {
-  let blocker = $('#blocker');
-  if (!blocker) {
-    blocker = document.createElement('div');
-    blocker.id = 'blocker';
-    blocker.className = 'blocker';
-    blocker.innerHTML = `
-      <div class="blocker-box">
-        <strong>시험 모드 진행 중</strong>
-        <p>시험이 끝날 때까지 이 화면을 나갈 수 없습니다.<br>
-        다른 앱으로 나가면 봉인이 해제되고, 감독관 확인 때 해제 기록이 표시됩니다.</p>
-        <button class="btn" id="blocker-close">시험 화면으로 돌아가기</button>
-      </div>`;
-    document.body.append(blocker);
-    $('#blocker-close').addEventListener('click', () => blocker.remove());
-  }
-  clearTimeout(blocker.timer);
-  blocker.timer = setTimeout(() => blocker.remove(), 4000); // 4초 뒤 자동으로 닫힘
+// 가림막 + 경고음
+//   'warn'   : 나가려는 시도를 막음 (봉인 유지) → 남색
+//   'broken' : 나갔다가 돌아옴 (봉인 해제됨) → 빨간색
+const BLOCKER_TEXT = {
+  warn: {
+    title: '시험 모드 진행 중',
+    body: '시험이 끝날 때까지 이 화면을 나갈 수 없습니다.<br>다른 앱으로 나가면 봉인이 해제되고, 감독관 확인 때 해제 기록이 표시됩니다.',
+  },
+  broken: {
+    title: '봉인이 해제되었습니다',
+    body: '시험 중 화면을 벗어난 기록이 남았습니다.<br>감독관이 QR을 스캔하면 해제 시각이 표시됩니다.',
+  },
+};
+
+function showBlocker(kind) {
+  playAlarm();
+  $('#blocker')?.remove();
+  const blocker = document.createElement('div');
+  blocker.id = 'blocker';
+  blocker.className = `blocker ${kind}`;
+  blocker.innerHTML = `
+    <div class="blocker-box">
+      <strong>${BLOCKER_TEXT[kind].title}</strong>
+      <p>${BLOCKER_TEXT[kind].body}</p>
+      <button class="btn">시험 화면으로 돌아가기</button>
+    </div>`;
+  document.body.append(blocker);
+  blocker.querySelector('button').addEventListener('click', () => blocker.remove());
+  setTimeout(() => blocker.remove(), 4000); // 4초 뒤 자동으로 닫힘
 }
 
 // 1초마다: 시계 갱신, 남은 시간 표시, 5초가 지나면 QR 새로 만들기
@@ -333,9 +255,20 @@ function startWatchers() {
   exam.watchers = new AbortController();
   const { signal } = exam.watchers;
 
-  // 다른 앱이나 탭으로 이동
+  // 다른 앱이나 탭으로 이동 → 봉인 해제 + 경고음
+  // 다시 돌아오면 → 빨간 경고 가림막 + 경고음으로 해제 사실을 알림
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) breakSeal('다른 앱 또는 탭으로 이동');
+    if (document.hidden) {
+      breakSeal('다른 앱 또는 탭으로 이동');
+    } else if (seal.status === 'broken') {
+      showBlocker('broken');
+    }
+  }, { signal });
+
+  // 화면 포커스를 잃음 (최근 앱 버튼·알림창을 내리는 순간 등, 나가기 직전 신호)
+  // → 아직 나간 것은 아니므로 봉인은 유지하고, 경고음 + 가림막으로 막는다.
+  window.addEventListener('blur', () => {
+    if (seal.status === 'active') showBlocker('warn');
   }, { signal });
 
   // 페이지를 닫거나 벗어남
@@ -358,6 +291,7 @@ function startWatchers() {
 async function breakSeal(reason) {
   if (seal?.status !== 'active') return; // 이미 해제됐거나 시험 중이 아니면 무시
   seal = { ...seal, status: 'broken', releasedAt: Date.now(), releaseReason: reason };
+  playAlarm();
   if (exam) {
     applySealUi();
     refreshQr(); // 해제 사실을 담은 QR로 바로 바꿈
@@ -379,7 +313,7 @@ function applySealUi() {
 }
 
 // ═════════════════════════════════════════════════════════════
-// ④ 시험 종료 (3초 길게 누르기)
+// ③ 시험 종료 (3초 길게 누르기)
 // ═════════════════════════════════════════════════════════════
 function setupHoldToEnd() {
   const button = $('#end-btn');
@@ -423,7 +357,7 @@ function showSummary() {
   const sealEnd = seal.releasedAt ?? seal.endedAt;
 
   app.innerHTML = `
-    <h2>④ 시험 종료 · 봉인 기록</h2>
+    <h2>시험 종료 · 봉인 기록</h2>
     <div class="result ${clean ? 'ok' : 'bad'}">
       ${clean ? '봉인 이상 없음' : '봉인 해제 기록 있음'}
       <div class="small">${clean
@@ -441,7 +375,15 @@ function showSummary() {
         <dt>봉인 유지</dt><dd>${formatDuration(sealEnd - seal.sealStart)}</dd>
       </dl>
     </div>
-    <a class="btn secondary" href="./test.html">데모 다시 하기 (테스트 도구에서 초기화)</a>`;
+    <button class="btn" id="again-btn">새 시험 시작</button>
+    <a class="btn secondary" href="./register.html">다른 응시자로 등록</a>`;
+
+  // 시험이 끝난 뒤에는 등록을 그대로 두고 새 시험을 바로 시작할 수 있다 (봉인 기록만 새로)
+  $('#again-btn').addEventListener('click', async () => {
+    seal = { status: 'ready' };
+    await dbSet('seal', seal);
+    showChecklist();
+  });
 }
 
 // ═════════════════════════════════════════════════════════════

@@ -163,6 +163,7 @@ body.broken .hold-button { border-color: #fff; }
   padding: 24px;
   animation: fade-in 0.15s ease-out;
 }
+.blocker.broken { background: rgba(160, 20, 20, 0.95); }
 .blocker-box { color: #fff; text-align: center; max-width: 360px; }
 .blocker-box strong { display: block; font-size: 26px; }
 .blocker-box p { font-size: 16px; line-height: 1.6; opacity: 0.9; }

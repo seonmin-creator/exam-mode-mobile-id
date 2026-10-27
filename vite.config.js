@@ -21,6 +21,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: page('index'),
+        register: page('register'),
         student: page('student'),
         proctor: page('proctor'),
         test: page('test'),
