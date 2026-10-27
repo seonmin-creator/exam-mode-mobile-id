@@ -53,6 +53,12 @@ export async function verifyText(publicKey, text, signatureB64) {
   }
 }
 
+// 글자(text)를 SHA-256으로 요약(지문)해서 base64url 글자로 돌려준다.
+export async function sha256Text(text) {
+  const digest = await subtle().digest('SHA-256', encoder.encode(text));
+  return bytesToBase64url(new Uint8Array(digest));
+}
+
 // ── 키 불러오기 / 만들기 ──
 
 // JWK(JSON 형태) 공개키를 검증용 키로 불러온다.

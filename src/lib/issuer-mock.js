@@ -6,14 +6,16 @@
 // ─────────────────────────────────────────────────────────────
 import { importIssuerPrivateKey, signText } from './crypto.js';
 
-// 응시자 정보 + 기기 공개키 → 발급기관 서명이 붙은 모의 신분증
-// 최소 정보 원칙: 이름·생년월일·수험번호·좌석·기기 공개키만 담는다 (주민등록번호 등은 넣지 않음)
-export async function issueCredential(candidate, devicePublicJwk) {
+// 응시자 정보 + 사진 지문 + 기기 공개키 → 발급기관 서명이 붙은 모의 신분증
+// 최소 정보 원칙: 이름·생년월일·수험번호·좌석·사진 지문·기기 공개키만 담는다 (주민등록번호 등은 넣지 않음)
+// 사진 자체는 넣지 않고 지문(SHA-256)만 넣는다 → QR이 작게 유지되고, 사진을 바꾸면 지문이 달라진다.
+export async function issueCredential(candidate, devicePublicJwk, photoHash = null) {
   const credential = {
     name: candidate.name,
     birth: candidate.birth,
     examNo: candidate.examNo,
     seat: candidate.seat,
+    photoHash, // 증명사진 지문 (사진 없이 등록하면 null)
     devicePublicKey: devicePublicJwk, // 이 신분증을 쓸 수 있는 '기기'를 묶어 두는 열쇠
   };
 

@@ -12,6 +12,7 @@ import QRCode from 'qrcode';
 import { buildSignedQr } from '../lib/qr-payload.js';
 import { dbGet, dbSet } from '../lib/db.js';
 import { unlockAlarm, playAlarm } from '../lib/alarm.js';
+import { photoHash } from '../lib/photo.js';
 import { findCandidate, assetUrl, formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
 
 const QR_INTERVAL = 5; // QR 갱신 주기 (초)
@@ -24,6 +25,8 @@ let deviceKeys = null; // 기기 키쌍 { privateKey, publicKey }
 let issued = null; // 발급받은 신분증 { credentialText, issuerSignature, examNo }
 let credential = null; // 신분증 내용 { name, birth, examNo, seat, devicePublicKey }
 let seal = null; // 봉인 상태 { status, sealStart, releasedAt, releaseReason, endedAt }
+let photo = null; // 등록 때 찍은 증명사진 (없으면 명단의 일러스트 아바타)
+let photoOk = true; // 사진 지문이 신분증에 서명된 지문과 같은가
 
 // 시험 모드 화면이 켜져 있는 동안만 쓰는 값
 let exam = null;
@@ -32,9 +35,14 @@ init().catch(showError);
 
 // ── 시작: 저장된 상태를 보고 알맞은 화면을 연다 ──
 async function init() {
-  [deviceKeys, issued, seal] = await Promise.all([dbGet('device'), dbGet('credential'), dbGet('seal')]);
+  [deviceKeys, issued, seal, photo] = await Promise.all([dbGet('device'), dbGet('credential'), dbGet('seal'), dbGet('photo')]);
   if (!deviceKeys || !issued) return showNotRegistered();
   credential = JSON.parse(issued.credentialText);
+
+  // 저장된 사진의 지문을 다시 계산해 신분증(발급기관 서명)에 든 지문과 비교 → 사진 바꿔치기 감지
+  if (credential.photoHash) {
+    photoOk = Boolean(photo) && (await photoHash(photo)) === credential.photoHash;
+  }
 
   // 시험 모드 도중에 페이지가 다시 열렸다 = 새로고침했거나 앱을 나갔다 들어옴 → 봉인 해제
   if (seal?.status === 'active') await breakSeal('새로고침 또는 화면 재진입');
@@ -47,6 +55,7 @@ async function init() {
 // 아직 이 폰에 등록된 응시자가 없을 때 → 등록 화면으로 안내
 function showNotRegistered() {
   app.innerHTML = `
+    <p class="eyebrow">응시자</p>
     <h2>등록된 응시자가 없습니다</h2>
     <p class="lead">먼저 응시자 등록(예비소집)을 해 주세요. 30초면 끝납니다.</p>
     <a class="btn" href="./register.html">응시자 등록하러 가기</a>`;
@@ -57,8 +66,9 @@ function showNotRegistered() {
 // ═════════════════════════════════════════════════════════════
 function showChecklist() {
   app.innerHTML = `
-    <h2>① 시험 모드 준비</h2>
-    <p class="lead">아래 내용을 확인하고 시험 모드를 시작하세요.</p>
+    <p class="eyebrow">진입 조건 확인</p>
+    <h2>시험 모드 준비</h2>
+    <p class="lead">아래 조건을 통과하면 시험 모드를 시작할 수 있습니다.</p>
     ${idCardHtml()}
     <div class="card" style="margin-top:12px">
       <ul class="steps">
@@ -354,7 +364,8 @@ function showSummary() {
   const sealEnd = seal.releasedAt ?? seal.endedAt;
 
   app.innerHTML = `
-    <h2>시험 종료 · 봉인 기록</h2>
+    <p class="eyebrow">시험 종료</p>
+    <h2>봉인 기록</h2>
     <div class="result ${clean ? 'ok' : 'bad'}">
       ${clean ? '봉인 이상 없음' : '봉인 해제 기록 있음'}
       <div class="small">${clean
@@ -379,20 +390,23 @@ function showSummary() {
 // 화면 조각 · 보조 기능
 // ═════════════════════════════════════════════════════════════
 
-// 신분증 카드 (사진은 명단의 아바타)
+// 신분증 카드 (등록 때 찍은 사진, 없으면 명단의 일러스트 아바타)
 function idCardHtml() {
-  const photo = findCandidate(credential.examNo)?.photo;
+  const avatar = findCandidate(credential.examNo)?.photo;
+  const src = photo ?? (avatar && assetUrl(avatar));
   return `
     <div class="id-card">
-      <div class="watermark" id="watermark"></div>
-      <span class="tag">모의 신분증</span>
-      ${photo ? `<img src="${assetUrl(photo)}" alt="" />` : ''}
-      <dl>
-        <dt>성명</dt><dd class="name">${escapeHtml(credential.name)}</dd>
-        <dt>생년월일</dt><dd>${formatBirth(credential.birth)}</dd>
-        <dt>수험번호</dt><dd>${credential.examNo}</dd>
-        <dt>좌석</dt><dd>${escapeHtml(credential.seat)}</dd>
-      </dl>
+      <div class="id-card-head"><span>모의 수험 신분증</span><span>${credential.examNo}</span></div>
+      <div class="id-card-body">
+        <div class="watermark" id="watermark"></div>
+        ${src ? `<img class="id-photo" src="${src}" alt="증명사진" />` : ''}
+        <dl>
+          <dt>성명</dt><dd class="name">${escapeHtml(credential.name)}</dd>
+          <dt>생년월일</dt><dd>${formatBirth(credential.birth)}</dd>
+          <dt>좌석</dt><dd>${escapeHtml(credential.seat)}</dd>
+        </dl>
+      </div>
+      ${photoOk ? '' : '<div class="id-card-alert">사진 지문 불일치 · 사진이 바뀐 것으로 의심됩니다</div>'}
     </div>`;
 }
 
