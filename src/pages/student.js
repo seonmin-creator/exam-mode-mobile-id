@@ -16,7 +16,6 @@ import { dbGet, dbSet } from '../lib/db.js';
 import { roster, findCandidate, assetUrl, formatTime, formatBirth, escapeHtml, $, sleep } from '../lib/util.js';
 
 const QR_INTERVAL = 5; // QR 갱신 주기 (초)
-const BATTERY_MIN = 0.6; // 진입 배터리 기준 60%
 const HOLD_MS = 3000; // 시험 종료 길게 누르기 3초
 
 const app = $('#app');
@@ -155,10 +154,6 @@ function showChecklist() {
           <div><div class="title">네트워크 연결 없음</div><div class="desc" id="chk-net-desc"></div></div>
         </li>
         <li>
-          <span class="mark wait" id="chk-bat"></span>
-          <div><div class="title">배터리 ${BATTERY_MIN * 100}% 이상 (충전 중이면 통과)</div><div class="desc" id="chk-bat-desc">확인 중…</div></div>
-        </li>
-        <li>
           <span class="mark info">i</span>
           <div><div class="title">블루투스</div><div class="desc">웹에서는 감지할 수 없습니다. 실제 앱에서 감지합니다.</div></div>
         </li>
@@ -180,12 +175,12 @@ function showChecklist() {
     <p class="small">시험 모드를 시작한 뒤 다른 앱으로 이동하거나 통신이 연결되면 즉시 봉인이 해제되며, 되돌릴 수 없습니다.</p>`;
   setWatermark();
 
-  const passed = { network: false, battery: false };
+  const passed = { network: false };
   const listeners = new AbortController(); // 화면을 떠날 때 감시를 한꺼번에 끄기 위함
   const { signal } = listeners;
 
   function update() {
-    $('#start-btn').disabled = !(passed.network && passed.battery);
+    $('#start-btn').disabled = !passed.network;
   }
 
   // 네트워크: navigator.onLine 이 false 여야 통과 (비행기 모드 + 와이파이 꺼짐)
@@ -197,30 +192,6 @@ function showChecklist() {
   checkNetwork();
   window.addEventListener('online', checkNetwork, { signal });
   window.addEventListener('offline', checkNetwork, { signal });
-
-  // 배터리: 지원하는 브라우저(안드로이드 크롬 등)에서만 확인, 미지원(아이폰 사파리 등)은 통과 처리
-  if ('getBattery' in navigator) {
-    navigator.getBattery().then((battery) => {
-      const checkBattery = () => {
-        const percent = Math.round(battery.level * 100);
-        passed.battery = battery.charging || battery.level >= BATTERY_MIN;
-        const state = battery.charging ? `${percent}% · 충전 중` : `${percent}%`;
-        setCheck('chk-bat', passed.battery, passed.battery ? `${state} (통과)` : `${state} — 충전해 주세요`);
-        update();
-      };
-      checkBattery();
-      battery.addEventListener('levelchange', checkBattery, { signal });
-      battery.addEventListener('chargingchange', checkBattery, { signal });
-    }).catch(() => batteryUnsupported());
-  } else {
-    batteryUnsupported();
-  }
-
-  function batteryUnsupported() {
-    passed.battery = true;
-    setCheck('chk-bat', true, '확인 불가 (브라우저 미지원) — 통과 처리');
-    update();
-  }
 
   $('#start-btn').addEventListener('click', () => {
     listeners.abort();
