@@ -9,6 +9,10 @@ import { TEST_CASES, makeTestQr } from '../lib/test-qr.js';
 import { verifyQr, CHECKS, VERDICTS } from '../lib/verify.js';
 import { dbClear } from '../lib/db.js';
 import { formatTime, escapeHtml, $ } from '../lib/util.js';
+import { registerQuietly } from '../lib/pwa.js';
+
+// 오프라인용 서비스 워커 등록 (이 화면에서는 업데이트 안내·자동 새로고침을 하지 않음)
+registerQuietly();
 
 const REFRESH_SEC = 5; // 응시자 화면과 같은 5초 갱신
 

@@ -64,6 +64,43 @@ body {
 }
 .page-header h1 { margin: 0; font-size: 18px; font-weight: 700; color: var(--navy-dark); }
 
+/* 처음 화면: 오프라인 준비 배지 */
+.offline-badge {
+  margin-left: auto;
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.offline-badge.wait { background: var(--warn-soft); color: var(--warn); }
+.offline-badge.ready { background: var(--ok-soft); color: var(--ok); }
+.offline-badge.off { background: #eef1f5; color: var(--muted); }
+
+/* 처음 화면: 새 버전 안내 */
+.update-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  background: var(--navy-soft);
+  color: var(--navy-dark);
+  font-weight: 700;
+  font-size: 15px;
+}
+.update-bar[hidden] { display: none; }
+.update-btn {
+  font: inherit;
+  font-size: 14px;
+  color: #fff;
+  background: var(--navy);
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
 main { max-width: 480px; margin: 0 auto; padding: 22px 18px 32px; }
 
 /* 제목 묶음: 작은 단계 표시 + 제목 + 설명 */

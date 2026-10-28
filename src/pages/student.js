@@ -14,6 +14,10 @@ import { dbGet, dbSet } from '../lib/db.js';
 import { unlockAlarm, playAlarm } from '../lib/alarm.js';
 import { photoHash } from '../lib/photo.js';
 import { findCandidate, assetUrl, formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
+import { registerQuietly } from '../lib/pwa.js';
+
+// 오프라인용 서비스 워커 등록 (이 화면에서는 업데이트 안내·자동 새로고침을 하지 않음)
+registerQuietly();
 
 const QR_INTERVAL = 5; // QR 갱신 주기 (초)
 const HOLD_MS = 3000; // 시험 종료 길게 누르기 3초

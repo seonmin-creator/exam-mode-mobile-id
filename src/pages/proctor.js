@@ -10,6 +10,10 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { verifyQr, CHECKS } from '../lib/verify.js';
 import { dbGet, dbSet } from '../lib/db.js';
 import { assetUrl, formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
+import { registerQuietly } from '../lib/pwa.js';
+
+// 오프라인용 서비스 워커 등록 (이 화면에서는 업데이트 안내·자동 새로고침을 하지 않음)
+registerQuietly();
 
 const RESULT_MS = 3000; // 결과 화면을 보여 주는 시간 (3초)
 

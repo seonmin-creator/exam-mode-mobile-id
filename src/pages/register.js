@@ -10,6 +10,10 @@ import { issueCredential } from '../lib/issuer-mock.js';
 import { makeIdPhoto, photoHash } from '../lib/photo.js';
 import { dbGet, dbSet } from '../lib/db.js';
 import { roster, findCandidate, assetUrl, escapeHtml, $, sleep } from '../lib/util.js';
+import { registerQuietly } from '../lib/pwa.js';
+
+// 오프라인용 서비스 워커 등록 (이 화면에서는 업데이트 안내·자동 새로고침을 하지 않음)
+registerQuietly();
 
 const app = $('#app');
 
