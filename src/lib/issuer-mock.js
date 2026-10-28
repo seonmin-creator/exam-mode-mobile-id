@@ -4,7 +4,8 @@
 // ⚠ 실제 서비스에서는 발급기관 개인키가 정부 서버에만 있고,
 //   예비소집 등록 시 서버가 서명한다. 데모라서 브라우저에 넣었다.
 // ─────────────────────────────────────────────────────────────
-import { importIssuerPrivateKey, signText } from './crypto.js';
+import { importSigningKey, signText } from './crypto.js';
+import { ISSUER_PRIVATE_JWK } from './issuer-key.js'; // 등록 화면에서만 불러옴
 
 // 응시자 정보 + 사진 지문 + 기기 공개키 → 발급기관 서명이 붙은 모의 신분증
 // 최소 정보 원칙: 이름·생년월일·수험번호·좌석·사진 지문·기기 공개키만 담는다 (주민등록번호 등은 넣지 않음)
@@ -21,7 +22,7 @@ export async function issueCredential(candidate, devicePublicJwk, photoHash = nu
 
   // 서명은 '글자 그대로'에 대해 하므로, 글자(credentialText) 자체를 보관하고 전달한다.
   const credentialText = JSON.stringify(credential);
-  const issuerKey = await importIssuerPrivateKey();
+  const issuerKey = await importSigningKey(ISSUER_PRIVATE_JWK);
   const issuerSignature = await signText(issuerKey, credentialText);
 
   return { credentialText, issuerSignature };

@@ -6,13 +6,53 @@
   <meta name="theme-color" content="#1b3a6b" />
   <title>감독관 · 오프라인 검증</title>
   <link rel="stylesheet" href="/src/styles.css" />
+  <link rel="stylesheet" href="/src/proctor.css" />
 </head>
 <body>
   <div class="mock-banner">모의 시스템 · 실제 모바일신분증과 연결되지 않음</div>
   <header class="page-header"><a href="./index.html">← 처음</a><h1>감독관</h1></header>
+
+  <!-- 감독관 기기 시각 · 네트워크 상태 -->
+  <div class="status-bar">
+    <div><span class="small">감독관 기기 시각</span><strong id="clock">--:--:--</strong></div>
+    <span class="net-chip" id="net-chip"></span>
+  </div>
+
   <main>
-    <h2>준비 중</h2>
-    <p class="lead">감독관 화면(QR 스캔·오프라인 검증)은 2단계에서 만듭니다.</p>
+    <p class="eyebrow">QR 스캔</p>
+    <h2>응시자 QR을 비춰 주세요</h2>
+    <p class="lead">발급기관 공개키와 명단만으로 이 기기 안에서 검증합니다.</p>
+
+    <div class="reader-box">
+      <div id="reader"></div>
+      <div class="reader-msg" id="reader-msg" hidden></div>
+    </div>
+    <button class="btn" id="camera-btn" hidden>카메라 시작</button>
+
+    <section class="log">
+      <div class="log-head">
+        <h3>확인 기록</h3>
+        <span class="small" id="log-count"></span>
+      </div>
+      <ul class="log-list" id="log-list"></ul>
+      <button class="btn secondary" id="clear-btn">시험 종료 · 기록 삭제</button>
+      <p class="notice" id="clear-msg" hidden></p>
+    </section>
   </main>
+
+  <!-- 판정 결과 (화면 전체) -->
+  <div class="result-screen" id="result" hidden>
+    <div class="result-inner">
+      <p class="result-title" id="result-title"></p>
+      <p class="result-detail" id="result-detail"></p>
+      <ul class="check-list" id="check-list"></ul>
+      <div id="result-body"></div>
+      <button class="btn" id="rescan-btn">다시 스캔</button>
+      <div class="auto-close"><i id="auto-bar"></i></div>
+      <p class="auto-hint" id="auto-hint">3초 뒤 스캔 대기로 돌아갑니다 · 화면을 누르면 멈춤</p>
+    </div>
+  </div>
+
+  <script type="module" src="/src/pages/proctor.js"></script>
 </body>
 </html>

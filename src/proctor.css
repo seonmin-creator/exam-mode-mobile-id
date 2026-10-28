@@ -1,0 +1,153 @@
+/* ─────────────────────────────────────────────────────────────
+   감독관 화면 전용 스타일
+   ───────────────────────────────────────────────────────────── */
+
+/* 상단: 기기 시각 · 네트워크 상태 */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.status-bar .small { display: block; font-size: 12px; }
+.status-bar strong { font-size: 24px; color: var(--navy-dark); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.net-chip {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  text-align: right;
+}
+.net-chip.offline { background: var(--ok-soft); color: var(--ok); }
+
+/* 카메라 */
+.reader-box {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #0d1420;
+  min-height: 260px;
+}
+#reader { width: 100%; }
+#reader video { display: block; width: 100% !important; }
+.reader-msg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  text-align: center;
+  color: #fff;
+  font-size: 15px;
+}
+
+/* 확인 기록 */
+.log { margin-top: 24px; }
+.log-head { display: flex; align-items: baseline; justify-content: space-between; }
+.log h3 { margin: 0 0 8px; font-size: 18px; }
+.log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.log-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+.log-list li + li { border-top: 1px solid var(--line); }
+.log-time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.log-who { font-weight: 700; }
+.log-who small { display: block; font-weight: 400; color: var(--muted); }
+.log-result { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-align: center; }
+.log-result.level-green { background: var(--ok-soft); color: var(--ok); }
+.log-result.level-red { background: var(--bad-soft); color: var(--bad); }
+.log-result.level-orange { background: var(--warn-soft); color: var(--warn); }
+.log-result.level-gray { background: #eef1f5; color: var(--muted); }
+.log-list li.log-empty { display: block; color: var(--muted); text-align: center; }
+
+/* 판정 결과: 화면 전체 배경색 */
+.result-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow-y: auto;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  padding: 28px 18px;
+}
+.result-screen[hidden] { display: none; }
+.result-screen.level-green { background: #18794a; }
+.result-screen.level-red { background: #b42323; }
+.result-screen.level-orange { background: #c26410; }
+.result-screen.level-gray { background: #4b5563; }
+.result-inner { width: 100%; max-width: 440px; }
+.result-title { margin: 8px 0 4px; font-size: 32px; font-weight: 800; line-height: 1.25; }
+.result-detail { margin: 0 0 14px; font-size: 16px; opacity: 0.92; }
+.result-person { font-size: 18px; font-weight: 700; margin: 12px 0 0; }
+
+/* 단계별 ✓ ✕ 목록 */
+.check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.check-list li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.check-list li.fail { background: #fff; color: #b42323; }
+.check-list li.skip { opacity: 0.55; }
+
+/* 유효할 때: 얼굴 대조 안내 + 응시자 정보 */
+.face-check {
+  margin-top: 16px;
+  background: #fff;
+  color: #18794a;
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+}
+.person {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.person img { width: 52px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; flex: none; opacity: 0.9; }
+.person dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; }
+.person dt { font-size: 13px; opacity: 0.8; align-self: center; }
+.person dd { margin: 0; font-weight: 700; }
+.person dd.name { font-size: 24px; }
+.result-note { margin: 8px 0 0; font-size: 13px; opacity: 0.85; }
+
+.result-screen .btn { background: #fff; color: var(--navy-dark); margin-top: 18px; }
+.auto-close { height: 4px; background: rgba(255, 255, 255, 0.25); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+.auto-close i { display: block; height: 100%; width: 100%; background: #fff; }
+.auto-hint { font-size: 13px; text-align: center; opacity: 0.85; margin: 6px 0 0; }

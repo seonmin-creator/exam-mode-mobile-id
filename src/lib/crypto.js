@@ -6,7 +6,9 @@
 //   내용이 한 글자라도 바뀌면 검증이 실패하고,
 //   개인키가 없으면 올바른 서명을 만들 수 없다.
 // ─────────────────────────────────────────────────────────────
-import { ISSUER_PUBLIC_JWK, ISSUER_PRIVATE_JWK } from './issuer-key.js';
+// 공개키만 불러온다. 개인키는 issuer-mock.js(등록 화면 전용)에서만 다룬다.
+// → 감독관 화면 번들에는 발급기관 개인키가 들어가지 않는다.
+import { ISSUER_PUBLIC_JWK } from './issuer-public-key.js';
 
 // 키 종류: 타원곡선 P-256
 const KEY_ALGO = { name: 'ECDSA', namedCurve: 'P-256' };
@@ -70,10 +72,9 @@ export function importIssuerPublicKey() {
   return importPublicKey(ISSUER_PUBLIC_JWK);
 }
 
-// ⚠ 실제 서비스에서는 발급기관 개인키가 정부 서버에만 있고,
-//   예비소집 등록 시 서버가 서명한다. 데모라서 브라우저에 넣었다.
-export function importIssuerPrivateKey() {
-  return subtle().importKey('jwk', ISSUER_PRIVATE_JWK, KEY_ALGO, false, ['sign']);
+// JWK 개인키를 서명용 키로 불러온다. (모의 발급기관이 등록 때만 사용)
+export function importSigningKey(jwk) {
+  return subtle().importKey('jwk', jwk, KEY_ALGO, false, ['sign']);
 }
 
 // 응시자 기기 키쌍을 새로 만든다.
