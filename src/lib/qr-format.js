@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// QR 내용 만들기 / 풀기
+// QR 내용 만들기 / 풀기 (응시자 화면 · 감독관 화면 · 테스트 도구가 함께 쓰는 QR 형식)
 //
 // QR 한 장에 들어가는 것 (5초마다 새로 만듦)
 //   payload = {
@@ -43,7 +43,12 @@ export async function buildSignedQr({ issued, deviceKey, seal, now = Date.now() 
 
   // 기기 키로 payload 전체에 서명 → 시각·봉인 상태를 몰래 바꾸면 검증 실패
   const deviceSignature = await signText(deviceKey, payloadText);
+  return encodeQr({ payloadText, deviceSignature });
+}
 
+// { payloadText, deviceSignature } → QR 글자 (서명은 하지 않고 포장만 한다)
+// 테스트 도구에서 '내용 변조 QR'(서명은 그대로 두고 내용만 바꾼 QR)을 만들 때도 쓴다.
+export function encodeQr({ payloadText, deviceSignature }) {
   const outerText = JSON.stringify({ payload: payloadText, deviceSignature });
   const compressed = deflateRaw(encoder.encode(outerText));
   return PREFIX + bytesToBase64url(compressed);

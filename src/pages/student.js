@@ -9,7 +9,7 @@
 //   'ended'  : 시험 종료 (해제 기록이 있으면 releasedAt 이 남아 있음)
 // ─────────────────────────────────────────────────────────────
 import QRCode from 'qrcode';
-import { buildSignedQr } from '../lib/qr-payload.js';
+import { buildSignedQr } from '../lib/qr-format.js';
 import { dbGet, dbSet } from '../lib/db.js';
 import { unlockAlarm, playAlarm } from '../lib/alarm.js';
 import { photoHash } from '../lib/photo.js';

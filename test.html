@@ -6,14 +6,37 @@
   <meta name="theme-color" content="#1b3a6b" />
   <title>테스트 도구</title>
   <link rel="stylesheet" href="/src/styles.css" />
+  <link rel="stylesheet" href="/src/test.css" />
 </head>
 <body>
   <div class="mock-banner">모의 시스템 · 실제 모바일신분증과 연결되지 않음</div>
+  <div class="test-banner">시연용 테스트 도구 · 실제 공격 도구가 아님</div>
   <header class="page-header"><a href="./index.html">← 처음</a><h1>테스트 도구</h1></header>
   <main>
-    <p class="lead">위조 QR·오래된 QR 생성 도구는 3단계에서 추가합니다.</p>
+    <p class="eyebrow">감독관 화면 시연</p>
+    <h2>테스트 QR 7가지</h2>
+    <p class="lead">버튼을 누르면 QR이 나옵니다. 감독관 폰으로 스캔해서 기대 결과와 같은지 확인하세요.
+      응시자 등록을 하지 않은 폰에서도 됩니다 (응시자: 김하늘 고정).</p>
 
-    <div class="card">
+    <ol class="case-list" id="case-list"></ol>
+
+    <!-- 선택한 테스트 QR -->
+    <section class="qr-panel" id="qr-panel" hidden>
+      <p class="eyebrow" id="panel-no"></p>
+      <h3 id="panel-name"></h3>
+      <div class="qr-frame"><canvas id="test-qr"></canvas></div>
+      <p class="refresh-note" id="refresh-note"></p>
+
+      <div class="expect-box" id="expect-box">
+        <span class="small">기대 결과</span>
+        <strong id="expect-text"></strong>
+      </div>
+
+      <button class="btn secondary" id="self-verify-btn">이 기기에서 직접 검증해 보기</button>
+      <div class="self-result" id="self-result" hidden></div>
+    </section>
+
+    <div class="card reset-card">
       <h2>응시자 데이터 초기화</h2>
       <p class="small">이 기기에 저장된 기기 키·모의 신분증·봉인 기록을 모두 지워 데모를 처음부터 다시 할 수 있게 합니다.</p>
       <button class="btn danger" id="reset-btn">응시자 데이터 초기화</button>

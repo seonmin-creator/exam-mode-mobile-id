@@ -13,7 +13,7 @@
 //   5. 봉인           → 시험 모드가 풀린 적 없는가? (화면 이탈·통신 연결 적발)
 //   6. 명단           → 이 시험실 응시자인가? (다른 시험실·명단 외 인원 차단)
 // ─────────────────────────────────────────────────────────────
-import { decodeQr } from './qr-payload.js';
+import { decodeQr } from './qr-format.js';
 import { importIssuerPublicKey, importPublicKey, verifyText } from './crypto.js';
 import { roster, formatTime } from './util.js';
 

@@ -1,0 +1,114 @@
+/* ─────────────────────────────────────────────────────────────
+   테스트 도구 전용 스타일
+   ───────────────────────────────────────────────────────────── */
+
+/* 시연용 표시 띠 */
+.test-banner {
+  background: #fff4e0;
+  color: #8a4b00;
+  border-bottom: 1px solid #f1d3a6;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+}
+
+/* 테스트 카드 7개 */
+.case-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.case-card {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.case-card.active { border-color: var(--navy); box-shadow: 0 0 0 2px var(--navy) inset; }
+.case-no {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+.case-body { display: grid; gap: 3px; }
+.case-body strong { font-size: 17px; }
+.case-line { font-size: 14px; color: var(--muted); line-height: 1.4; }
+
+/* 판정 색 (감독관 화면과 같은 4가지) */
+.level-green { --lv: #18794a; --lv-soft: #e6f4ec; }
+.level-red { --lv: #b42323; --lv-soft: #fbe9e9; }
+.level-orange { --lv: #c26410; --lv-soft: #fdf0e1; }
+.level-gray { --lv: #4b5563; --lv-soft: #eef1f5; }
+.chip { font-style: normal; font-weight: 700; padding: 1px 7px; border-radius: 6px; background: var(--lv-soft); color: var(--lv); }
+
+/* 선택한 QR */
+.qr-panel {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 12px;
+}
+.qr-panel[hidden] { display: none; }
+.qr-panel h3 { margin: 0 0 12px; font-size: 22px; }
+.qr-frame {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+.qr-frame canvas { display: block; width: 100% !important; height: auto !important; }
+.refresh-note { font-size: 13px; color: var(--muted); text-align: center; margin: 8px 0 12px; }
+
+/* 기대 결과 (크게) */
+.expect-box {
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+  background: var(--lv-soft);
+  color: var(--lv);
+  border: 2px solid var(--lv);
+}
+.expect-box .small { display: block; color: inherit; opacity: 0.8; }
+.expect-box strong { display: block; font-size: 24px; line-height: 1.3; margin-top: 2px; }
+
+#self-verify-btn { margin-top: 12px; }
+
+/* 이 기기에서 직접 검증한 결과 */
+.self-result {
+  margin-top: 12px;
+  border-radius: var(--radius);
+  padding: 14px;
+  background: var(--lv);
+  color: #fff;
+}
+.self-result[hidden] { display: none; }
+.self-result .small { color: inherit; opacity: 0.85; }
+.self-title { display: block; font-size: 22px; margin: 2px 0; }
+.self-detail { margin: 0 0 10px; font-size: 15px; opacity: 0.92; }
+.self-match { margin: 10px 0 0; font-weight: 700; }
+.check-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.check-list li {
+  display: flex;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.check-list li.fail { background: #fff; color: var(--lv); }
+.check-list li.skip { opacity: 0.55; }
+
+.reset-card { margin-top: 28px; }
