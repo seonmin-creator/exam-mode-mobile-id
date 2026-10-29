@@ -6,7 +6,7 @@
 // 확인 기록은 감독관 기기의 IndexedDB('proctorLog')에만 남고,
 // '시험 종료 · 기록 삭제'를 누르면 지운다 (개인정보 최소 보관).
 // ─────────────────────────────────────────────────────────────
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { createScanner } from '../lib/scanner.js';
 import { verifyQr, CHECKS } from '../lib/verify.js';
 import { dbGet, dbSet } from '../lib/db.js';
 import { assetUrl, formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
@@ -17,7 +17,7 @@ registerQuietly();
 
 const RESULT_MS = 3000; // 결과 화면을 보여 주는 시간 (3초)
 
-let scanner = null; // html5-qrcode 스캐너
+let scanner = null; // 카메라 스캐너 (lib/scanner.js)
 let busy = false; // 결과를 보여 주는 동안에는 새 QR을 읽지 않음
 let closeTimer = null;
 let log = []; // 확인 기록 [{ at, examNo, name, verdict, level, title }]
@@ -40,26 +40,13 @@ window.addEventListener('online', updateNet);
 window.addEventListener('offline', updateNet);
 
 // ── 카메라 스캔 ──
+// 카메라를 고해상도로 열고 원래 해상도 그대로 해독한다 (자세한 이유: lib/scanner.js)
 async function startScanner() {
   $('#camera-btn').hidden = true;
   showReaderMsg('');
   try {
-    scanner ??= new Html5Qrcode('reader', {
-      formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-      verbose: false,
-    });
-    await scanner.start(
-      { facingMode: 'environment' }, // 후면 카메라
-      {
-        fps: 10,
-        qrbox: (w, h) => {
-          const size = Math.floor(Math.min(w, h) * 0.8);
-          return { width: size, height: size };
-        },
-      },
-      onScan,
-      () => {}, // 한 프레임에서 QR을 못 찾은 것은 정상 (무시)
-    );
+    scanner ??= createScanner($('#camera'), onScan);
+    await scanner.start();
   } catch (err) {
     console.error(err);
     showReaderMsg(window.isSecureContext
@@ -78,7 +65,7 @@ function showReaderMsg(text) {
 async function onScan(qrText) {
   if (busy) return;
   busy = true;
-  try { scanner.pause(true); } catch { /* 이미 멈춤 */ }
+  scanner.pause();
 
   const result = await verifyQr(qrText); // ★ 이 기기 안에서만 검증
   showResult(result);
@@ -148,7 +135,7 @@ function closeResult() {
   clearTimeout(closeTimer);
   $('#result').hidden = true;
   busy = false;
-  try { scanner?.resume(); } catch { /* 스캐너가 꺼져 있음 */ }
+  scanner?.resume();
 }
 
 $('#rescan-btn').addEventListener('click', (e) => {

@@ -27,9 +27,12 @@
     <p class="lead">발급기관 공개키와 명단만으로 이 기기 안에서 검증합니다.</p>
 
     <div class="reader-box">
-      <div id="reader"></div>
+      <video id="camera" playsinline muted autoplay></video>
+      <!-- 이 테두리 안쪽만 해독한다 (lib/scanner.js의 CROP과 같은 영역) -->
+      <div class="scan-guide"></div>
       <div class="reader-msg" id="reader-msg" hidden></div>
     </div>
+    <p class="scan-tip">응시자 폰 밝기를 최대로 · QR이 테두리를 꽉 채우도록 15~20cm 거리에서 비추세요</p>
     <button class="btn" id="camera-btn" hidden>카메라 시작</button>
 
     <section class="log">

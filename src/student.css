@@ -112,13 +112,22 @@ body.broken .seal-status { color: #fff; background: rgba(0, 0, 0, 0.22); border-
   border-radius: var(--radius);
   border: 1px solid var(--line);
   margin-top: 12px;
-  padding: 12px;
+  padding: 6px;
   text-align: center;
 }
-.qr-box canvas { width: 230px !important; height: 230px !important; display: block; margin: 0 auto; }
+/* QR은 폭을 꽉 채워 크게 (칸이 촘촘해서 작으면 감독관 카메라가 못 읽음). 픽셀을 흐리지 않게 그대로 확대 */
+.qr-box canvas {
+  width: 100% !important;
+  max-width: 380px;
+  height: auto !important;
+  aspect-ratio: 1;
+  display: block;
+  margin: 0 auto;
+  image-rendering: pixelated;
+}
 .qr-meta { font-size: 14px; color: var(--muted); margin-top: 4px; }
 .qr-meta b { color: var(--navy); font-size: 17px; }
-.qr-bar { height: 4px; background: #eef1f5; border-radius: 2px; overflow: hidden; margin: 6px auto 0; max-width: 230px; }
+.qr-bar { height: 4px; background: #eef1f5; border-radius: 2px; overflow: hidden; margin: 6px auto 0; max-width: 380px; }
 .qr-bar i { display: block; height: 100%; background: var(--navy); transition: width 1s linear; }
 
 /* 시각 표시 */

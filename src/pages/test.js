@@ -14,7 +14,9 @@ import { registerQuietly } from '../lib/pwa.js';
 // 오프라인용 서비스 워커 등록 (이 화면에서는 업데이트 안내·자동 새로고침을 하지 않음)
 registerQuietly();
 
-const REFRESH_SEC = 5; // 응시자 화면과 같은 5초 갱신
+const REFRESH_SEC = 15; // 응시자 화면과 같은 15초 갱신
+// QR 그리기 설정: 응시자 화면과 같음 (오류정정 L · 표준 여백 4칸 · 칸당 6px)
+const QR_DRAW = { errorCorrectionLevel: 'L', margin: 4, scale: 6 };
 
 let current = null; // 지금 보여 주는 테스트 { testCase, qrText }
 let countdown = REFRESH_SEC;
@@ -62,17 +64,17 @@ async function drawQr() {
   const qrText = await makeTestQr(testCase);
   if (id !== drawId) return; // 그사이 다른 테스트를 골랐음
   current.qrText = qrText;
-  await QRCode.toCanvas($('#test-qr'), qrText, { errorCorrectionLevel: 'M', margin: 2, width: 460 });
+  await QRCode.toCanvas($('#test-qr'), qrText, QR_DRAW);
   updateRefreshNote();
 }
 
 function updateRefreshNote() {
   $('#refresh-note').textContent = current.testCase.refresh
-    ? `5초마다 지금 시각으로 다시 만듭니다 · ${countdown}초 뒤 갱신`
+    ? `${REFRESH_SEC}초마다 지금 시각으로 다시 만듭니다 · ${countdown}초 뒤 갱신`
     : '일부러 갱신하지 않습니다 · QR 속 시각이 2분 전으로 고정';
 }
 
-// 1초마다: 갱신하는 테스트는 5초가 되면 QR을 새로 만든다 (2번 오래된 QR은 제외)
+// 1초마다: 갱신하는 테스트는 갱신 주기가 되면 QR을 새로 만든다 (2번 오래된 QR은 제외)
 setInterval(() => {
   if (!current?.testCase.refresh) return;
   countdown -= 1;

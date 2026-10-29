@@ -19,7 +19,14 @@ import { registerQuietly } from '../lib/pwa.js';
 // 오프라인용 서비스 워커 등록 (이 화면에서는 업데이트 안내·자동 새로고침을 하지 않음)
 registerQuietly();
 
-const QR_INTERVAL = 5; // QR 갱신 주기 (초)
+// QR 갱신 주기 (초). 감독관은 30초 넘은 QR을 '시간 초과'로 판정하므로 30초보다 충분히 짧아야 한다.
+const QR_INTERVAL = 15;
+
+// QR 그리기 설정 (QR 안의 내용·형식과는 상관없고, 화면에 그리는 방법만 정함)
+//   - 오류정정 L: 화면은 찢어지거나 더러워지지 않으므로 가장 낮은 단계로 충분 → 칸 수가 줄어 잘 읽힘 (101칸 → 89칸)
+//   - 여백 4칸: QR 표준 여백. 여백이 좁으면 카메라가 QR 경계를 잘 못 찾는다
+//   - 칸 하나를 6px로 그려 선명하게 (화면에는 CSS로 폭에 맞춰 표시)
+const QR_DRAW = { errorCorrectionLevel: 'L', margin: 4, scale: 6 };
 const HOLD_MS = 3000; // 시험 종료 길게 누르기 3초
 
 const app = $('#app');
@@ -153,7 +160,7 @@ function showExam() {
     <div class="seal-status" id="seal-status"></div>
     ${idCardHtml()}
     <div class="qr-box">
-      <canvas id="qr" width="460" height="460"></canvas>
+      <canvas id="qr"></canvas>
       <div class="qr-meta">다음 갱신까지 <b id="qr-count">${QR_INTERVAL}</b>초</div>
       <div class="qr-bar"><i id="qr-bar"></i></div>
     </div>
@@ -224,7 +231,7 @@ function showBlocker(kind) {
   setTimeout(() => blocker.remove(), 4000); // 4초 뒤 자동으로 닫힘
 }
 
-// 1초마다: 시계 갱신, 남은 시간 표시, 5초가 지나면 QR 새로 만들기
+// 1초마다: 시계 갱신, 남은 시간 표시, 갱신 주기가 지나면 QR 새로 만들기
 function tick() {
   $('#clock').textContent = formatTime(Date.now());
   exam.countdown -= 1;
@@ -252,7 +259,7 @@ async function refreshQr() {
       },
     });
     if (!exam) return; // 그사이 시험이 끝났으면 그리지 않음
-    await QRCode.toCanvas($('#qr'), qrText, { errorCorrectionLevel: 'M', margin: 2, width: 460 });
+    await QRCode.toCanvas($('#qr'), qrText, QR_DRAW);
   } finally {
     if (exam) {
       exam.busy = false;

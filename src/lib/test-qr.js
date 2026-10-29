@@ -57,7 +57,7 @@ function prepare() {
 const sealed = (k) => ({ sealStart: k.sealStart, sealed: true });
 
 // 테스트 QR 7가지
-//   refresh : true면 5초마다 지금 시각으로 다시 만든다 (감독관이 시간 초과로 오판하지 않게)
+//   refresh : true면 15초마다 지금 시각으로 다시 만든다 (감독관이 시간 초과로 오판하지 않게)
 //   expect  : 감독관 화면에 나와야 하는 판정 (verify.js의 verdict)
 export const TEST_CASES = [
   {

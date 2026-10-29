@@ -33,8 +33,17 @@
   background: #0d1420;
   min-height: 260px;
 }
-#reader { width: 100%; }
-#reader video { display: block; width: 100% !important; }
+/* 카메라는 정사각형으로 보여 준다 → 화면에 보이는 가운데가 그대로 해독 영역 */
+#camera { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.scan-guide {
+  position: absolute;
+  inset: 5%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+.scan-tip { font-size: 13px; color: var(--muted); text-align: center; margin: 8px 0 0; }
 .reader-msg {
   position: absolute;
   inset: 0;
