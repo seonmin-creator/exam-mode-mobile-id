@@ -174,3 +174,17 @@
 .room-view strong { font-size: 17px; color: var(--navy-dark); }
 .room-card .form { margin: 0; }
 .room-card .form .small { margin: 0; }
+
+/* 카메라 권한 허용 방법 */
+.camera-help {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.camera-help[hidden] { display: none; }
+.camera-help strong { display: block; color: var(--warn); font-size: 15px; margin-bottom: 4px; }
+.camera-help p { margin: 6px 0 0; }

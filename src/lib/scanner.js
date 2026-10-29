@@ -85,5 +85,7 @@ export function createScanner(video, onText) {
     pause: () => { paused = true; }, // 결과를 보여 주는 동안 새 QR을 읽지 않음
     resume: () => { paused = false; },
     get resolution() { return video.videoWidth ? `${video.videoWidth}×${video.videoHeight}` : ''; },
+    // 카메라가 켜져 있는가 (다른 앱에 갔다 오면 폰이 카메라를 끄는 경우가 있음)
+    get active() { return Boolean(stream) && stream.getVideoTracks().some((t) => t.readyState === 'live'); },
   };
 }

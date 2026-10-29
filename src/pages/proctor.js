@@ -44,14 +44,40 @@ window.addEventListener('offline', updateNet);
 // 카메라를 고해상도로 열고 원래 해상도 그대로 해독한다 (자세한 이유: lib/scanner.js)
 async function startScanner() {
   $('#camera-btn').hidden = true;
-  showReaderMsg('');
+  $('#camera-help').hidden = true;
+  showReaderMsg('카메라를 켜는 중…');
   try {
     scanner ??= createScanner($('#camera'), onScan);
     await scanner.start();
+    showReaderMsg('');
   } catch (err) {
     console.error(err);
     showReaderMsg(cameraErrorText(err));
+    $('#camera-help').hidden = err?.name !== 'NotAllowedError'; // 권한이 막혔으면 푸는 방법 보여 주기
     $('#camera-btn').hidden = false;
+  }
+}
+
+// 카메라 권한 상태: 'granted'(허용) · 'denied'(차단) · 'prompt'(아직 안 물어봄) · 'unknown'
+async function cameraPermission() {
+  try {
+    return (await navigator.permissions.query({ name: 'camera' })).state;
+  } catch {
+    return 'unknown'; // 권한 상태를 알려 주지 않는 브라우저
+  }
+}
+
+// 카메라 준비: 이미 허용됐으면 바로 켜고, 아니면 [카메라 켜기] 버튼을 눌렀을 때만 권한을 묻는다.
+// (화면을 열 때마다 권한 창을 띄우면, 창을 몇 번 닫았을 때 크롬이 스스로 '차단'으로 바꿔 버린다)
+async function prepareCamera() {
+  const state = await cameraPermission();
+  if (state === 'granted') return startScanner();
+  $('#camera-btn').hidden = false;
+  if (state === 'denied') {
+    showReaderMsg('카메라 권한이 차단되어 있습니다. 아래 방법으로 허용해 주세요.');
+    $('#camera-help').hidden = false;
+  } else {
+    showReaderMsg('[카메라 켜기]를 누르고 카메라 권한을 "허용"해 주세요.');
   }
 }
 
@@ -59,12 +85,25 @@ async function startScanner() {
 function cameraErrorText(err) {
   if (!window.isSecureContext) return '카메라는 https 주소에서만 작동합니다.';
   switch (err?.name) {
-    case 'NotAllowedError': return '카메라 권한이 막혀 있습니다. 주소창 왼쪽 자물쇠 → 카메라 → 허용 후 [카메라 시작]을 눌러 주세요.';
-    case 'NotReadableError': return '다른 앱이나 다른 탭이 카메라를 쓰고 있습니다. 그 앱·탭을 닫고 [카메라 시작]을 눌러 주세요.';
+    case 'NotAllowedError': return '카메라 권한이 차단되어 있습니다. 아래 방법으로 허용해 주세요.';
+    case 'NotReadableError': return '다른 앱이나 다른 탭이 카메라를 쓰고 있습니다. 그 앱·탭을 닫고 [카메라 켜기]를 눌러 주세요.';
     case 'NotFoundError': case 'OverconstrainedError': return '이 기기에서 쓸 수 있는 카메라를 찾지 못했습니다.';
-    default: return `카메라를 열 수 없습니다 (${err?.name || err}). [카메라 시작]을 다시 눌러 주세요.`;
+    default: return `카메라를 열 수 없습니다 (${err?.name || err}). [카메라 켜기]를 다시 눌러 주세요.`;
   }
 }
+
+// 설정에서 권한을 허용하고 돌아오면 자동으로 카메라를 켠다
+navigator.permissions?.query({ name: 'camera' }).then((status) => {
+  status.addEventListener('change', () => {
+    if (status.state === 'granted' && room && !scanner?.active) startScanner();
+  });
+}).catch(() => {});
+
+// 다른 앱에 갔다 오면 폰이 카메라를 꺼 버리는 경우가 있어, 돌아왔을 때 다시 켠다
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || !room || !scanner || scanner.active) return;
+  if ((await cameraPermission()) !== 'denied') startScanner();
+});
 
 function showReaderMsg(text) {
   $('#reader-msg').hidden = !text;
@@ -243,7 +282,7 @@ $('#room-form').addEventListener('submit', async (e) => {
   room = { examName, venue };
   await dbSet('proctorRoom', room);
   showRoom();
-  if (!scanner) startScanner(); // 처음 입력했을 때 스캔 시작
+  if (!scanner?.active) prepareCamera(); // 처음 입력했을 때 카메라 준비
 });
 
 // ── 시작 ──
@@ -252,5 +291,5 @@ log ??= [];
 renderLog();
 showRoom();
 // 담당 시험실을 입력해야 스캔을 시작한다 (시험실 확인에 필요)
-if (room) startScanner();
+if (room) prepareCamera();
 else showReaderMsg('먼저 위에 담당 시험명과 시험장소를 입력해 주세요.');
