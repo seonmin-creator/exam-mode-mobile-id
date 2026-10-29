@@ -13,7 +13,7 @@ import { buildSignedQr } from '../lib/qr-format.js';
 import { dbGet, dbSet } from '../lib/db.js';
 import { unlockAlarm, playAlarm } from '../lib/alarm.js';
 import { photoHash } from '../lib/photo.js';
-import { findCandidate, assetUrl, formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
+import { formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
 import { registerQuietly } from '../lib/pwa.js';
 
 // 오프라인용 서비스 워커 등록 (이 화면에서는 업데이트 안내·자동 새로고침을 하지 않음)
@@ -34,9 +34,9 @@ const app = $('#app');
 // 이 기기에 저장된 상태 (IndexedDB에서 불러옴)
 let deviceKeys = null; // 기기 키쌍 { privateKey, publicKey }
 let issued = null; // 발급받은 신분증 { credentialText, issuerSignature, examNo }
-let credential = null; // 신분증 내용 { name, birth, examNo, seat, devicePublicKey }
+let credential = null; // 신분증 내용 { name, birth, examName, examNo, venue, seat, photoHash, devicePublicKey }
 let seal = null; // 봉인 상태 { status, sealStart, releasedAt, releaseReason, endedAt }
-let photo = null; // 등록 때 찍은 증명사진 (없으면 명단의 일러스트 아바타)
+let photo = null; // 등록 때 찍은 증명사진 (dataURL)
 let photoOk = true; // 사진 지문이 신분증에 서명된 지문과 같은가
 
 // 시험 모드 화면이 켜져 있는 동안만 쓰는 값
@@ -49,6 +49,8 @@ async function init() {
   [deviceKeys, issued, seal, photo] = await Promise.all([dbGet('device'), dbGet('credential'), dbGet('seal'), dbGet('photo')]);
   if (!deviceKeys || !issued) return showNotRegistered();
   credential = JSON.parse(issued.credentialText);
+  // 예전 방식(가상 명단)으로 등록한 폰: 시험명·시험장소가 없으므로 다시 등록해야 한다
+  if (!credential.examName || !credential.venue) return showNotRegistered('예전 방식으로 등록된 정보입니다. 시험명·시험장소를 넣어 다시 등록해 주세요.');
 
   // 저장된 사진의 지문을 다시 계산해 신분증(발급기관 서명)에 든 지문과 비교 → 사진 바꿔치기 감지
   if (credential.photoHash) {
@@ -64,11 +66,11 @@ async function init() {
 }
 
 // 아직 이 폰에 등록된 응시자가 없을 때 → 등록 화면으로 안내
-function showNotRegistered() {
+function showNotRegistered(reason = '먼저 응시자 등록(예비소집)을 해 주세요. 1분이면 끝납니다.') {
   app.innerHTML = `
     <p class="eyebrow">응시자</p>
     <h2>등록된 응시자가 없습니다</h2>
-    <p class="lead">먼저 응시자 등록(예비소집)을 해 주세요. 30초면 끝납니다.</p>
+    <p class="lead">${reason}</p>
     <a class="btn" href="./register.html">응시자 등록하러 가기</a>`;
 }
 
@@ -401,19 +403,19 @@ function showSummary() {
 // 화면 조각 · 보조 기능
 // ═════════════════════════════════════════════════════════════
 
-// 신분증 카드 (등록 때 찍은 사진, 없으면 명단의 일러스트 아바타)
+// 신분증 카드 (등록 때 찍은 증명사진 + 신분증 내용)
 function idCardHtml() {
-  const avatar = findCandidate(credential.examNo)?.photo;
-  const src = photo ?? (avatar && assetUrl(avatar));
   return `
     <div class="id-card">
-      <div class="id-card-head"><span>모의 수험 신분증</span><span>${credential.examNo}</span></div>
+      <div class="id-card-head"><span>모의 수험 신분증</span><span>${escapeHtml(credential.examNo)}</span></div>
       <div class="id-card-body">
         <div class="watermark" id="watermark"></div>
-        ${src ? `<img class="id-photo" src="${src}" alt="증명사진" />` : ''}
+        ${photo ? `<img class="id-photo" src="${photo}" alt="증명사진" />` : ''}
         <dl>
           <dt>성명</dt><dd class="name">${escapeHtml(credential.name)}</dd>
           <dt>생년월일</dt><dd>${formatBirth(credential.birth)}</dd>
+          <dt>시험</dt><dd class="sub">${escapeHtml(credential.examName)}</dd>
+          <dt>장소</dt><dd class="sub">${escapeHtml(credential.venue)}</dd>
           <dt>좌석</dt><dd>${escapeHtml(credential.seat)}</dd>
         </dl>
       </div>

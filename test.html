@@ -19,7 +19,16 @@
     <p class="eyebrow">감독관 화면 시연</p>
     <h2>테스트 QR 7가지</h2>
     <p class="lead">버튼을 누르면 QR이 나옵니다. 감독관 폰으로 스캔해서 기대 결과와 같은지 확인하세요.
-      응시자 등록을 하지 않은 폰에서도 됩니다 (응시자: 김하늘 고정).</p>
+      응시자 등록을 하지 않은 폰에서도 됩니다 (응시자: '테스트 응시자').</p>
+
+    <!-- 테스트 QR에 넣을 시험명·시험장소 = 감독관 폰의 담당 시험실과 같게 -->
+    <form class="card form" id="room-form">
+      <p class="small" style="margin:0">감독관 폰에 입력한 <b>담당 시험명·시험장소</b>와 똑같이 입력하세요.</p>
+      <label class="field"><span>시험명</span><input name="examName" required maxlength="30" placeholder="예) 2026학년도 2학기 기말고사" /></label>
+      <label class="field"><span>시험장소</span><input name="venue" required maxlength="30" placeholder="예) 대전대신고 2학년 3반 교실" /></label>
+      <button class="btn secondary" type="submit">적용</button>
+      <p class="small" id="room-msg" hidden style="margin:0">적용했습니다. 아래에서 테스트를 고르세요.</p>
+    </form>
 
     <ol class="case-list" id="case-list"></ol>
 

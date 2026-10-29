@@ -14,7 +14,7 @@
 //   → payload 전체를 '기기 키'로 서명 → { payload, deviceSignature }
 //   → JSON을 압축(deflate) → base64url 글자로 바꿔서 QR로 그림
 //
-// 사진은 QR에 넣지 않는다. 감독관은 수험번호로 명단에서 사진을 불러온다.
+// 사진은 QR에 넣지 않는다 (사진 지문만 신분증에 서명). 감독관은 응시자 화면의 사진과 얼굴을 대조한다.
 // ─────────────────────────────────────────────────────────────
 import { deflateRaw, inflateRaw } from 'pako';
 import { signText, bytesToBase64url, base64urlToBytes } from './crypto.js';

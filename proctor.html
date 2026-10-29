@@ -24,7 +24,21 @@
   <main>
     <p class="eyebrow">QR 스캔</p>
     <h2>응시자 QR을 비춰 주세요</h2>
-    <p class="lead">발급기관 공개키와 명단만으로 이 기기 안에서 검증합니다.</p>
+    <p class="lead">발급기관 공개키와 담당 시험실 정보만으로 이 기기 안에서 검증합니다.</p>
+
+    <!-- 담당 시험실: 신분증의 시험명·시험장소와 비교 -->
+    <section class="room-card">
+      <div class="room-view" id="room-view" hidden>
+        <div><span class="small">담당 시험실</span><strong id="room-text"></strong></div>
+        <button class="link-btn" id="room-edit" type="button">변경</button>
+      </div>
+      <form class="form" id="room-form" hidden>
+        <p class="small">맡은 시험명과 시험장소를 응시자 등록 때와 같게 입력하세요. 띄어쓰기는 달라도 됩니다.</p>
+        <label class="field"><span>시험명</span><input name="examName" required maxlength="30" placeholder="예) 2026학년도 2학기 기말고사" /></label>
+        <label class="field"><span>시험장소</span><input name="venue" required maxlength="30" placeholder="예) 대전대신고 2학년 3반 교실" /></label>
+        <button class="btn" type="submit">저장하고 스캔 시작</button>
+      </form>
+    </section>
 
     <div class="reader-box">
       <video id="camera" playsinline muted autoplay></video>

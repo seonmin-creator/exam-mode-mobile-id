@@ -9,7 +9,7 @@
 import { createScanner } from '../lib/scanner.js';
 import { verifyQr, CHECKS } from '../lib/verify.js';
 import { dbGet, dbSet } from '../lib/db.js';
-import { assetUrl, formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
+import { formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
 import { registerQuietly } from '../lib/pwa.js';
 
 // 오프라인용 서비스 워커 등록 (이 화면에서는 업데이트 안내·자동 새로고침을 하지 않음)
@@ -21,6 +21,7 @@ let scanner = null; // 카메라 스캐너 (lib/scanner.js)
 let busy = false; // 결과를 보여 주는 동안에는 새 QR을 읽지 않음
 let closeTimer = null;
 let log = []; // 확인 기록 [{ at, examNo, name, verdict, level, title }]
+let room = null; // 담당 시험실 { examName, venue }
 
 // ── 상단: 시각 · 네트워크 상태 ──
 function tickClock() {
@@ -76,7 +77,7 @@ async function onScan(qrText) {
   busy = true;
   scanner.pause();
 
-  const result = await verifyQr(qrText); // ★ 이 기기 안에서만 검증
+  const result = await verifyQr(qrText, { room }); // ★ 이 기기 안에서만 검증
   showResult(result);
   addLog(result);
   navigator.vibrate?.(result.verdict === 'valid' ? [80] : [200, 100, 200]);
@@ -115,23 +116,23 @@ function showResult(r) {
 }
 
 // 유효할 때: 응시자 정보 + 얼굴 대조 안내
-function validHtml({ credential, payload, candidate }) {
+// (사진은 QR에 넣지 않으므로 감독관은 응시자 화면의 사진과 실제 얼굴을 대조한다)
+function validHtml({ credential, payload }) {
   return `
     <div class="face-check">응시자 화면의 사진과 얼굴을 대조하세요</div>
     <div class="person">
-      ${candidate.photo ? `<img src="${assetUrl(candidate.photo)}" alt="" title="명단 참고 이미지" />` : ''}
       <dl>
         <dt>성명</dt><dd class="name">${escapeHtml(credential.name)}</dd>
         <dt>생년월일</dt><dd>${formatBirth(credential.birth)}</dd>
+        <dt>시험</dt><dd>${escapeHtml(credential.examName)}</dd>
         <dt>수험번호</dt><dd>${escapeHtml(credential.examNo)}</dd>
+        <dt>시험장소</dt><dd>${escapeHtml(credential.venue)}</dd>
         <dt>좌석</dt><dd>${escapeHtml(credential.seat)}</dd>
-        <dt>시험실</dt><dd>${escapeHtml(candidate.venue)}</dd>
         <dt>봉인 시작</dt><dd>${formatTime(payload.sealStart)}</dd>
         <dt>봉인 유지</dt><dd>${formatDuration(payload.time - payload.sealStart)}</dd>
       </dl>
     </div>
-    ${credential.photoHash ? '<p class="result-note">사진 지문 포함 · 발급 후 바뀐 사진은 응시자 화면에 경고 표시</p>' : ''}
-    ${candidate.photo ? '<p class="result-note">왼쪽 그림은 명단 참고 이미지입니다 (실제 사진 아님)</p>' : ''}`;
+    ${credential.photoHash ? '<p class="result-note">사진 지문 포함 · 발급 후 바뀐 사진은 응시자 화면에 경고 표시</p>' : ''}`;
 }
 
 // 실패했어도 신분증을 읽었으면 누구의 QR인지 한 줄로 보여 준다
@@ -209,7 +210,47 @@ function formatDuration(ms) {
   return h ? `${h}시간 ${m}분 ${s}초` : `${m}분 ${s}초`;
 }
 
+// ── 담당 시험실 ──
+// 감독관이 맡은 시험명·시험장소. 신분증에 서명된 시험명·시험장소와 같아야 '유효함'이 된다.
+// 이 감독관 기기의 IndexedDB('proctorRoom')에만 저장한다.
+function showRoom() {
+  const set = Boolean(room);
+  $('#room-view').hidden = !set;
+  $('#room-form').hidden = set;
+  if (set) {
+    $('#room-text').textContent = `${room.examName} · ${room.venue}`;
+  } else {
+    const form = $('#room-form');
+    form.examName.value = '';
+    form.venue.value = '';
+  }
+}
+
+$('#room-edit').addEventListener('click', () => {
+  const form = $('#room-form');
+  form.examName.value = room?.examName ?? '';
+  form.venue.value = room?.venue ?? '';
+  $('#room-view').hidden = true;
+  form.hidden = false;
+});
+
+$('#room-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const examName = form.examName.value.trim();
+  const venue = form.venue.value.trim();
+  if (!examName || !venue) return;
+  room = { examName, venue };
+  await dbSet('proctorRoom', room);
+  showRoom();
+  if (!scanner) startScanner(); // 처음 입력했을 때 스캔 시작
+});
+
 // ── 시작 ──
-log = (await dbGet('proctorLog')) ?? [];
+[log, room] = await Promise.all([dbGet('proctorLog'), dbGet('proctorRoom')]);
+log ??= [];
 renderLog();
-startScanner();
+showRoom();
+// 담당 시험실을 입력해야 스캔을 시작한다 (시험실 확인에 필요)
+if (room) startScanner();
+else showReaderMsg('먼저 위에 담당 시험명과 시험장소를 입력해 주세요.');

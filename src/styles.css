@@ -304,3 +304,22 @@ p.lead { color: var(--muted); margin: 0 0 18px; font-size: 16px; }
 }
 .done img { width: 54px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; flex: none; }
 .done strong { display: block; color: var(--ok); font-size: 18px; }
+
+/* 입력 칸 (응시자 등록 · 감독관 담당 시험실 · 테스트 도구) */
+.form { display: grid; gap: 14px; margin-bottom: 10px; }
+.field { display: grid; gap: 6px; }
+.field > span { font-size: 15px; font-weight: 700; color: var(--text); }
+.field input {
+  font: inherit;
+  font-size: 17px;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.field input:focus { outline: 2px solid var(--navy); outline-offset: 1px; border-color: var(--navy); }
+.field small { font-size: 13px; color: var(--muted); }
+.done .small { display: block; }

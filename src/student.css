@@ -80,6 +80,7 @@ body.broken .seal-status { color: #fff; background: rgba(0, 0, 0, 0.22); border-
 .id-card dt { color: var(--muted); font-size: 13px; align-self: center; }
 .id-card dd { margin: 0; font-weight: 700; font-size: 16px; }
 .id-card dd.name { font-size: 22px; color: var(--navy-dark); }
+.id-card dd.sub { font-size: 14px; font-weight: 600; line-height: 1.35; } /* 시험명·장소는 길어서 조금 작게 */
 .id-card-alert {
   background: var(--bad-soft);
   color: var(--bad);
