@@ -101,6 +101,8 @@ body {
   cursor: pointer;
 }
 
+[hidden] { display: none !important; } /* hidden 속성은 .btn·.form 등의 display보다 항상 우선 */
+
 main { max-width: 480px; margin: 0 auto; padding: 22px 18px 32px; }
 
 /* 제목 묶음: 작은 단계 표시 + 제목 + 설명 */
