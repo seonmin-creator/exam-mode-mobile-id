@@ -6,11 +6,11 @@
 //     credential       : 모의 신분증(글자)        ┐ 발급기관이 서명한 부분
 //     issuerSignature  : 발급기관 서명            ┘
 //     time             : 지금 시각 (ms)
-//     sealStart        : 봉인 시작 시각 (ms)
-//     sealed           : 봉인 상태 (true/false)
-//     releasedAt       : 봉인 해제 시각 (없으면 null)
-//     releaseReason    : 봉인 해제 원인 (없으면 null)
-//     restoreCount     : 감독관이 봉인을 복구해 준 횟수 (복구한 적이 있을 때만)
+//     sealStart        : 잠금 시작 시각 (ms)
+//     sealed           : 잠금 상태 (true/false)
+//     releasedAt       : 잠금 해제 시각 (없으면 null)
+//     releaseReason    : 잠금 해제 원인 (없으면 null)
+//     restoreCount     : 감독관이 잠금을 복구해 준 횟수 (복구한 적이 있을 때만)
 //     restoredAt       : 마지막 복구 시각 (복구한 적이 있을 때만)
 //   }
 //   → payload 전체를 '기기 키'로 서명 → { payload, deviceSignature }
@@ -62,11 +62,11 @@ export async function buildSignedQr({ issued, deviceKey, seal, now = Date.now() 
     sealed: seal.sealed,
     releasedAt: seal.releasedAt ?? null,
     releaseReason: seal.releaseReason ?? null,
-    // 감독관이 봉인을 복구해 준 적이 있으면 그 횟수와 마지막 시각 (기기 서명 안에 들어가 숨길 수 없음)
+    // 감독관이 잠금을 복구해 준 적이 있으면 그 횟수와 마지막 시각 (기기 서명 안에 들어가 숨길 수 없음)
     ...(seal.restoreCount ? { restoreCount: seal.restoreCount, restoredAt: seal.restoredAt } : {}),
   });
 
-  // 기기 키로 payload 전체에 서명 → 시각·봉인 상태를 몰래 바꾸면 검증 실패
+  // 기기 키로 payload 전체에 서명 → 시각·잠금 상태를 몰래 바꾸면 검증 실패
   const deviceSignature = await signText(deviceKey, payloadText);
   return encodeQr({ payloadText, deviceSignature });
 }

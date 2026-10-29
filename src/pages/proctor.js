@@ -169,9 +169,9 @@ function validHtml({ credential, payload }) {
         <dt>수험번호</dt><dd>${escapeHtml(credential.examNo)}</dd>
         <dt>시험장소</dt><dd>${escapeHtml(credential.venue)}</dd>
         <dt>좌석</dt><dd>${escapeHtml(credential.seat)}</dd>
-        <dt>봉인 시작</dt><dd>${formatTime(payload.sealStart)}</dd>
-        <dt>봉인 유지</dt><dd>${formatDuration(payload.time - payload.sealStart)}</dd>
-        ${payload.restoreCount ? `<dt>봉인 복구</dt><dd>${payload.restoreCount}회 · 감독관 승인 (마지막 ${formatTime(payload.restoredAt)})</dd>` : ''}
+        <dt>잠금 시작</dt><dd>${formatTime(payload.sealStart)}</dd>
+        <dt>잠금 유지</dt><dd>${formatDuration(payload.time - payload.sealStart)}</dd>
+        ${payload.restoreCount ? `<dt>잠금 복구</dt><dd>${payload.restoreCount}회 · 감독관 승인 (마지막 ${formatTime(payload.restoredAt)})</dd>` : ''}
       </dl>
     </div>
     ${credential.photoHash ? '<p class="result-note">사진 지문 포함 · 발급 후 바뀐 사진은 응시자 화면에 경고 표시</p>' : ''}`;
@@ -183,15 +183,15 @@ function personLine({ credential }) {
   return `<p class="result-person">${escapeHtml(credential.name)} · ${escapeHtml(credential.examNo ?? '')}</p>`;
 }
 
-// ── 봉인 복구 (감독관 승인) ──
-// '봉인 해제됨' 판정은 서명·시각이 모두 진짜인 QR에서만 나온다 → 이 QR의 해제 시각은 믿을 수 있다.
+// ── 잠금 복구 (감독관 승인) ──
+// '잠금 해제됨' 판정은 서명·시각이 모두 진짜인 QR에서만 나온다 → 이 QR의 해제 시각은 믿을 수 있다.
 // 감독관이 사정을 확인하고 실수라고 판단하면 6자리 복구 코드를 만들어 응시자에게 알려 준다. (lib/restore-code.js)
 function restoreHtml(r) {
   if (r.verdict !== 'unsealed' || !r.payload?.releasedAt) return '';
   return `
     <div class="restore-box" id="restore-box">
       <p>실수로 풀린 경우(알림창을 잘못 내림 등), 응시자 사정을 확인한 뒤 복구 코드를 알려 주세요.</p>
-      <button class="btn restore-btn" id="restore-btn" type="button">봉인 복구 코드 만들기</button>
+      <button class="btn restore-btn" id="restore-btn" type="button">잠금 복구 코드 만들기</button>
     </div>`;
 }
 
@@ -199,11 +199,11 @@ async function showRestoreCode(r) {
   stopAutoClose(); // 코드를 알려 주는 동안 결과 화면이 닫히지 않게
   const code = await makeRestoreCode(r.credential.examNo, r.payload.releasedAt);
   $('#restore-box').innerHTML = `
-    <span class="small">봉인 복구 코드 · ${escapeHtml(r.credential.name)}</span>
+    <span class="small">잠금 복구 코드 · ${escapeHtml(r.credential.name)}</span>
     <strong class="restore-code">${code.slice(0, 3)} ${code.slice(3)}</strong>
-    <p>응시자 화면의 빨간 상자에 이 6자리를 입력하면 봉인이 복구됩니다.<br>
-    해제 기록은 지워지지 않고, 다음 스캔 때 '봉인 복구 1회'로 표시됩니다.</p>`;
-  addLog({ ...r, level: 'orange', title: '봉인 복구 코드 발급' });
+    <p>응시자 화면의 빨간 상자에 이 6자리를 입력하면 잠금이 복구됩니다.<br>
+    해제 기록은 지워지지 않고, 다음 스캔 때 '잠금 복구 1회'로 표시됩니다.</p>`;
+  addLog({ ...r, level: 'orange', title: '잠금 복구 코드 발급' });
 }
 
 function closeResult() {

@@ -3,14 +3,14 @@
 //
 // ★ 모든 검증은 이 기기 안에서만 한다. 네트워크 요청(fetch 등)을 쓰지 않는다.
 //   감독관 기기가 미리 가진 것: ① 발급기관 공개키  ② 담당 시험명·시험장소 (감독관이 입력)
-//   이 두 가지만 있으면 통신 없이 진위·시각·봉인·시험실을 모두 확인할 수 있다.
+//   이 두 가지만 있으면 통신 없이 진위·시각·잠금·시험실을 모두 확인할 수 있다.
 //
 // 판정 순서 (하나라도 실패하면 거기서 멈추고 그 결과를 돌려준다)
 //   1. QR 해독        → 이 시스템의 QR인가?
 //   2. 발급기관 서명  → 신분증이 진짜인가? (위조 신분증 차단)
 //   3. 기기 서명      → 등록된 그 폰이 만든 QR인가? (위조·조작 QR 차단)
 //   4. 시각           → 30초 이내에 만든 QR인가? (캡처·재사용 차단)
-//   5. 봉인           → 시험 모드가 풀린 적 없는가? (화면 이탈·통신 연결 적발)
+//   5. 잠금           → 시험 모드가 풀린 적 없는가? (화면 이탈·통신 연결 적발)
 //   6. 시험실         → 이 시험실 응시자인가? (다른 시험·다른 시험장 응시자 차단)
 // ─────────────────────────────────────────────────────────────
 import { decodeQr } from './qr-format.js';
@@ -25,7 +25,7 @@ export const CHECKS = [
   { key: 'issuer', label: '발급기관 서명' },
   { key: 'device', label: '기기 서명' },
   { key: 'time', label: '시각' },
-  { key: 'seal', label: '봉인' },
+  { key: 'seal', label: '잠금' },
   { key: 'room', label: '시험실' },
 ];
 
@@ -35,7 +35,7 @@ export const VERDICTS = {
   forgedCredential: { level: 'red', title: '서명 불일치 · 위조 신분증' },
   forgedQr: { level: 'red', title: '서명 불일치 · 위조 QR' },
   expired: { level: 'orange', title: '시간 초과 · 캡처 의심' },
-  unsealed: { level: 'red', title: '봉인 해제됨' },
+  unsealed: { level: 'red', title: '잠금 해제됨' },
   wrongRoom: { level: 'red', title: '다른 시험실 응시자' },
   valid: { level: 'green', title: '유효함' },
 };
@@ -76,9 +76,9 @@ export async function verifyQr(qrText, { now = Date.now(), room = null } = {}) {
 
   // ── 3. 기기 서명 ──
   // 막는 것: 위조·조작된 QR, 다른 폰으로 옮긴 신분증.
-  // QR 전체(시각·봉인 상태 포함)는 '신분증에 적힌 기기 공개키'의 짝인 기기 개인키로 서명된다.
+  // QR 전체(시각·잠금 상태 포함)는 '신분증에 적힌 기기 공개키'의 짝인 기기 개인키로 서명된다.
   // 기기 개인키는 등록한 폰 밖으로 꺼낼 수 없으므로,
-  // 시각·봉인 상태를 몰래 고치거나 다른 폰에서 QR을 만들면 여기서 걸린다.
+  // 시각·잠금 상태를 몰래 고치거나 다른 폰에서 QR을 만들면 여기서 걸린다.
   try {
     const deviceKey = await importPublicKey(credential.devicePublicKey);
     checks.device = await verifyText(deviceKey, payloadText, deviceSignature);
@@ -101,10 +101,10 @@ export async function verifyQr(qrText, { now = Date.now(), room = null } = {}) {
     return result('expired', { credential, payload, skewSeconds, detail: `${how} · 허용 ${MAX_SKEW_MS / 1000}초` });
   }
 
-  // ── 5. 봉인 ──
+  // ── 5. 잠금 ──
   // 막는 것: 시험 중 다른 앱 사용·통신 연결.
-  // 응시자 폰은 화면 이탈·통신 연결·새로고침을 감지하면 봉인을 풀고, 그 사실을 QR에 넣어 서명한다.
-  // 봉인 상태도 서명 안에 있으므로 숨길 수 없다.
+  // 응시자 폰은 화면 이탈·통신 연결·새로고침을 감지하면 잠금을 풀고, 그 사실을 QR에 넣어 서명한다.
+  // 잠금 상태도 서명 안에 있으므로 숨길 수 없다.
   checks.seal = payload.sealed === true;
   if (!checks.seal) {
     return result('unsealed', {

@@ -56,13 +56,13 @@ function prepare(room) {
       forgedIssued,
       outsiderIssued,
       sealStart: now - 10 * 60 * 1000, // 10분 전에 시험 모드를 시작한 것으로
-      releasedAt: now - 60 * 1000, // 봉인 해제 QR: 1분 전에 해제된 것으로
+      releasedAt: now - 60 * 1000, // 잠금 해제 QR: 1분 전에 해제된 것으로
     };
   })();
   return ready;
 }
 
-// 봉인 유지 상태
+// 잠금 유지 상태
 const sealed = (k) => ({ sealStart: k.sealStart, sealed: true });
 
 // 테스트 QR 7가지
@@ -115,7 +115,7 @@ export const TEST_CASES = [
   {
     // 기획서 시나리오: QR 속 글자를 고쳐 이름·좌석을 바꾸기 (대리 응시·자리 바꾸기)
     // 좌석은 발급기관이 서명한 신분증 안에 있으므로 '발급기관 서명' 단계에서 걸린다.
-    // (payload 전체에 기기 서명도 걸려 있어서, 신분증 밖의 시각·봉인을 바꾸면 '기기 서명' 단계에서 걸린다.)
+    // (payload 전체에 기기 서명도 걸려 있어서, 신분증 밖의 시각·잠금을 바꾸면 '기기 서명' 단계에서 걸린다.)
     id: 'tampered',
     name: '내용 변조 QR',
     mimics: '정상 QR의 좌석을 1번 → 7번으로 고침 (서명은 그대로)',
@@ -134,12 +134,12 @@ export const TEST_CASES = [
   },
   {
     // 기획서 시나리오: 시험 중 다른 앱으로 나갔다 돌아온 응시자
-    // 봉인 해제 기록도 기기 서명 안에 들어 있어서 숨기거나 지울 수 없다.
+    // 잠금 해제 기록도 기기 서명 안에 들어 있어서 숨기거나 지울 수 없다.
     id: 'unsealed',
-    name: '봉인 해제 QR',
+    name: '잠금 해제 QR',
     mimics: '시험 중 다른 앱으로 나갔다 돌아온 응시자',
     expect: 'unsealed',
-    expectText: '봉인 해제됨',
+    expectText: '잠금 해제됨',
     refresh: true,
     make: (k) => buildSignedQr({
       issued: k.issued,

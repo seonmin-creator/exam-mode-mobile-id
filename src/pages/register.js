@@ -33,7 +33,7 @@ async function init() {
   const [issued, seal] = await Promise.all([dbGet('credential'), dbGet('seal')]);
   const current = issued ? JSON.parse(issued.credentialText) : null;
 
-  // 시험 모드 중(봉인 유지·해제)에는 다시 등록할 수 없다 → 기록을 지워 버리는 것을 막기 위함
+  // 시험 모드 중(잠금 유지·해제)에는 다시 등록할 수 없다 → 기록을 지워 버리는 것을 막기 위함
   // (단, 시험장소가 없는 예전 방식 등록은 더 이상 쓸 수 없으므로 다시 등록을 허용)
   if ((seal?.status === 'active' || seal?.status === 'broken') && current?.venue) {
     app.innerHTML = `
@@ -169,7 +169,7 @@ async function register(info, photo) {
       const signed = await issueCredential(info, publicJwk, await photoHash(photo));
       issued = { ...signed, examNo: info.examNo };
     },
-    // 4. 저장 (봉인 상태도 '대기'로 새로 시작)
+    // 4. 저장 (잠금 상태도 '대기'로 새로 시작)
     async () => {
       await dbSet('device', keyPair);
       await dbSet('credential', issued);

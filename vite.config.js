@@ -22,7 +22,7 @@ export default defineConfig({
     VitePWA({
       strategies: 'generateSW',
       // 'prompt': 새 버전이 와도 저절로 바꾸지 않고, 사용자가 [업데이트]를 눌러야 바꾼다.
-      // (응시자 화면은 새로고침 = 봉인 해제이므로, 시험 중 자동 새로고침이 절대 일어나면 안 된다)
+      // (응시자 화면은 새로고침 = 잠금 해제이므로, 시험 중 자동 새로고침이 절대 일어나면 안 된다)
       registerType: 'prompt',
       // 등록 코드는 src/lib/pwa.js 에서 페이지마다 직접 부른다 (자동 삽입하지 않음)
       injectRegister: false,

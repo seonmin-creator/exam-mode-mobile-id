@@ -141,7 +141,7 @@ $('#self-verify-btn').addEventListener('click', async () => {
 // ── 응시자 데이터 초기화 ──
 // IndexedDB를 비워 '응시자 등록'부터 다시 할 수 있게 한다. (테스트 QR과는 상관없음)
 $('#reset-btn').addEventListener('click', async () => {
-  if (!confirm('이 기기의 응시자 데이터(기기 키, 신분증, 봉인 기록)를 모두 지울까요?')) return;
+  if (!confirm('이 기기의 응시자 데이터(기기 키, 신분증, 잠금 기록)를 모두 지울까요?')) return;
   await dbClear();
   const msg = $('#reset-msg');
   msg.hidden = false;

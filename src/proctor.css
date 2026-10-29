@@ -198,7 +198,7 @@
 .camera-help strong { display: block; color: var(--warn); font-size: 15px; margin-bottom: 4px; }
 .camera-help p { margin: 6px 0 0; }
 
-/* 봉인 복구 (빨간 결과 화면 안) */
+/* 잠금 복구 (빨간 결과 화면 안) */
 .restore-box {
   margin-top: 16px;
   padding: 14px;

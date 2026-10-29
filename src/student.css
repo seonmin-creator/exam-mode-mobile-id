@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────
-   응시자 화면 전용 스타일 (시험 모드 · 봉인 해제 · 종료)
+   응시자 화면 전용 스타일 (시험 모드 · 잠금 해제 · 종료)
    ───────────────────────────────────────────────────────────── */
 
 /* 시험 모드에서는 화면을 꽉 채우고, 선택·길게 누르기 메뉴를 막는다 */
@@ -12,7 +12,7 @@ body.exam {
 body.exam .page-header { display: none; }
 body.exam main { padding: 12px 16px 20px; }
 
-/* 봉인 해제: 화면 전체 빨간색 */
+/* 잠금 해제: 화면 전체 빨간색 */
 body.exam.broken { background: var(--bad); }
 
 .seal-status {
@@ -157,7 +157,7 @@ body.broken .seal-status { color: #fff; background: rgba(0, 0, 0, 0.22); border-
   font-variant-numeric: tabular-nums;
 }
 
-/* 봉인 해제 안내 */
+/* 잠금 해제 안내 */
 .broken-info {
   margin-top: 12px;
   background: #fff;
@@ -233,7 +233,7 @@ body.broken .hold-button { border-color: #fff; }
 .summary dt { color: var(--muted); }
 .summary dd { margin: 0; font-weight: 700; }
 
-/* 봉인 복구 코드 입력 (빨간 화면 안의 흰 상자) */
+/* 잠금 복구 코드 입력 (빨간 화면 안의 흰 상자) */
 .restore { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 59, 48, 0.25); font-weight: 400; }
 .restore p { margin: 0 0 10px; font-size: 14px; color: #5a1a16; line-height: 1.5; }
 .restore input {

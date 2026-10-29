@@ -5,8 +5,8 @@
 //   'device'     → 기기 키쌍 (CryptoKey 그대로 저장, 개인키는 꺼낼 수 없음)
 //   'credential' → 발급받은 모의 신분증 { credentialText, issuerSignature, examNo }
 //   'photo'      → 등록 때 찍은 증명사진 (JPEG dataURL, 없으면 null) — 이 폰 밖으로 나가지 않음
-//   'seal'       → 봉인 상태 { status, sealStart, releasedAt, releaseReason, endedAt }
-//                  status: 'ready'(대기) | 'active'(봉인 중) | 'broken'(해제됨) | 'ended'(종료)
+//   'seal'       → 잠금 상태 { status, sealStart, releasedAt, releaseReason, endedAt }
+//                  status: 'ready'(대기) | 'active'(잠금 중) | 'broken'(해제됨) | 'ended'(종료)
 // ─────────────────────────────────────────────────────────────
 const DB_NAME = 'exam-mode-db';
 const STORE = 'kv';

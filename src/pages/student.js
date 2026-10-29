@@ -1,11 +1,11 @@
 // ─────────────────────────────────────────────────────────────
 // 응시자 화면
-//   (등록은 register.html 에서) → ① 진입 확인 → ② 시험 모드(봉인) → ③ 시험 종료
+//   (등록은 register.html 에서) → ① 진입 확인 → ② 시험 모드(잠금) → ③ 시험 종료
 //
-// 봉인 상태(seal.status)
+// 잠금 상태(seal.status)
 //   'ready'  : 등록만 끝난 상태
-//   'active' : 시험 모드 진행 중 (봉인 유지)
-//   'broken' : 봉인 해제됨 (되돌릴 수 없음)
+//   'active' : 시험 모드 진행 중 (잠금 유지)
+//   'broken' : 잠금 해제됨 (되돌릴 수 없음)
 //   'ended'  : 시험 종료 (해제 기록이 있으면 releasedAt 이 남아 있음)
 // ─────────────────────────────────────────────────────────────
 import QRCode from 'qrcode';
@@ -36,7 +36,7 @@ const app = $('#app');
 let deviceKeys = null; // 기기 키쌍 { privateKey, publicKey }
 let issued = null; // 발급받은 신분증 { credentialText, issuerSignature, examNo }
 let credential = null; // 신분증 내용 { name, birth, examName, examNo, venue, seat, photoHash, devicePublicKey }
-let seal = null; // 봉인 상태 { status, sealStart, releasedAt, releaseReason, endedAt }
+let seal = null; // 잠금 상태 { status, sealStart, releasedAt, releaseReason, endedAt }
 let photo = null; // 등록 때 찍은 증명사진 (dataURL)
 let photoOk = true; // 사진 지문이 신분증에 서명된 지문과 같은가
 
@@ -58,7 +58,7 @@ async function init() {
     photoOk = Boolean(photo) && (await photoHash(photo)) === credential.photoHash;
   }
 
-  // 시험 모드 도중에 페이지가 다시 열렸다 = 새로고침했거나 앱을 나갔다 들어옴 → 봉인 해제
+  // 시험 모드 도중에 페이지가 다시 열렸다 = 새로고침했거나 앱을 나갔다 들어옴 → 잠금 해제
   if (seal?.status === 'active') await breakSeal('새로고침 또는 화면 재진입');
 
   if (seal?.status === 'broken') return showExam();
@@ -109,7 +109,7 @@ function showChecklist() {
       </ul>
     </div>
     <button class="btn" id="start-btn" disabled>시험 모드 시작</button>
-    <p class="small">시험 모드를 시작한 뒤 다른 앱으로 이동하거나 통신이 연결되면 즉시 봉인이 해제되며, 되돌릴 수 없습니다.</p>`;
+    <p class="small">시험 모드를 시작한 뒤 다른 앱으로 이동하거나 통신이 연결되면 즉시 잠금이 해제되며, 되돌릴 수 없습니다.</p>`;
   setWatermark();
 
   const listeners = new AbortController(); // 화면을 떠날 때 감시를 한꺼번에 끄기 위함
@@ -169,7 +169,7 @@ function showExam() {
     </div>
     <div class="clock-row">
       <div>현재 시각<strong id="clock">--:--:--</strong></div>
-      <div>봉인 시작<strong>${formatTime(seal.sealStart)}</strong></div>
+      <div>잠금 시작<strong>${formatTime(seal.sealStart)}</strong></div>
     </div>
     <div class="broken-info" id="broken-info" hidden></div>
     <button class="hold-button" id="end-btn"><i class="hold-fill"></i><span>3초간 길게 눌러 시험 종료</span></button>`;
@@ -204,15 +204,15 @@ function startLeaveGuards() {
 }
 
 // 가림막 + 경고음
-//   'warn'   : 나가려는 시도를 막음 (봉인 유지) → 남색
-//   'broken' : 나갔다가 돌아옴 (봉인 해제됨) → 빨간색
+//   'warn'   : 나가려는 시도를 막음 (잠금 유지) → 남색
+//   'broken' : 나갔다가 돌아옴 (잠금 해제됨) → 빨간색
 const BLOCKER_TEXT = {
   warn: {
     title: '시험 모드 진행 중',
-    body: '시험이 끝날 때까지 이 화면을 나갈 수 없습니다.<br>다른 앱으로 나가면 봉인이 해제되고, 감독관 확인 때 해제 기록이 표시됩니다.',
+    body: '시험이 끝날 때까지 이 화면을 나갈 수 없습니다.<br>다른 앱으로 나가면 잠금이 해제되고, 감독관 확인 때 해제 기록이 표시됩니다.',
   },
   broken: {
-    title: '봉인이 해제되었습니다',
+    title: '잠금이 해제되었습니다',
     body: '시험 중 화면을 벗어난 기록이 남았습니다.<br>감독관이 QR을 스캔하면 해제 시각이 표시됩니다.',
   },
 };
@@ -246,7 +246,7 @@ function tick() {
   $('#qr-bar').style.width = `${(exam.countdown / QR_INTERVAL) * 100}%`;
 }
 
-// 지금 시각과 봉인 상태를 담아 기기 키로 서명한 QR을 새로 그린다.
+// 지금 시각과 잠금 상태를 담아 기기 키로 서명한 QR을 새로 그린다.
 async function refreshQr() {
   if (exam.busy) { exam.again = true; return; } // 그리는 중이면 끝난 뒤 한 번 더
   exam.busy = true;
@@ -273,12 +273,12 @@ async function refreshQr() {
   }
 }
 
-// 봉인 감시: 아래 일이 하나라도 생기면 즉시 '봉인 해제'
+// 잠금 감시: 아래 일이 하나라도 생기면 즉시 '잠금 해제'
 function startWatchers() {
   exam.watchers = new AbortController();
   const { signal } = exam.watchers;
 
-  // 다른 앱이나 탭으로 이동 → 봉인 해제 + 경고음
+  // 다른 앱이나 탭으로 이동 → 잠금 해제 + 경고음
   // 다시 돌아오면 → 빨간 경고 가림막 + 경고음으로 해제 사실을 알림
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
@@ -289,7 +289,7 @@ function startWatchers() {
   }, { signal });
 
   // 화면 포커스를 잃음 (최근 앱 버튼·알림창을 내리는 순간 등, 나가기 직전 신호)
-  // → 아직 나간 것은 아니므로 봉인은 유지하고, 경고음 + 가림막으로 막는다.
+  // → 아직 나간 것은 아니므로 잠금은 유지하고, 경고음 + 가림막으로 막는다.
   window.addEventListener('blur', () => {
     if (seal.status === 'active') showBlocker('warn');
   }, { signal });
@@ -310,7 +310,7 @@ function startWatchers() {
   document.addEventListener('webkitfullscreenchange', onFullscreenChange, { signal });
 }
 
-// 봉인 해제: 시각과 원인을 기록하고 화면을 빨갛게 바꾼다. 되돌릴 수 없다.
+// 잠금 해제: 시각과 원인을 기록하고 화면을 빨갛게 바꾼다. 되돌릴 수 없다.
 async function breakSeal(reason) {
   if (seal?.status !== 'active') return; // 이미 해제됐거나 시험 중이 아니면 무시
   seal = { ...seal, status: 'broken', releasedAt: Date.now(), releaseReason: reason };
@@ -323,22 +323,22 @@ async function breakSeal(reason) {
   await dbSet('seal', seal);
 }
 
-// 봉인 상태에 맞게 화면 색과 안내 문구 바꾸기
+// 잠금 상태에 맞게 화면 색과 안내 문구 바꾸기
 function applySealUi() {
   const broken = seal.status === 'broken';
   document.body.classList.toggle('broken', broken);
   $('#seal-status').textContent = broken
-    ? '봉인 해제됨'
-    : `시험 모드 · 봉인 유지 중${seal.restoreCount ? ` (복구 ${seal.restoreCount}회)` : ''}`;
+    ? '잠금 해제됨'
+    : `시험 모드 · 잠금 유지 중${seal.restoreCount ? ` (복구 ${seal.restoreCount}회)` : ''}`;
   const info = $('#broken-info');
   info.hidden = !broken;
   if (broken) {
     info.innerHTML = `
-      <strong>봉인 해제됨</strong>해제 시각 ${formatTime(seal.releasedAt)}<br>원인: ${escapeHtml(seal.releaseReason)}
+      <strong>잠금 해제됨</strong>해제 시각 ${formatTime(seal.releasedAt)}<br>원인: ${escapeHtml(seal.releaseReason)}
       <form class="restore" id="restore-form">
-        <p>실수로 풀렸다면 감독관에게 이 QR을 보여 주세요. 감독관이 알려 주는 <b>복구 코드 6자리</b>를 입력하면 봉인이 복구됩니다.</p>
+        <p>실수로 풀렸다면 감독관에게 이 QR을 보여 주세요. 감독관이 알려 주는 <b>복구 코드 6자리</b>를 입력하면 잠금이 복구됩니다.</p>
         <input id="restore-code" inputmode="numeric" autocomplete="off" maxlength="7" placeholder="000000" aria-label="복구 코드 6자리" />
-        <button class="btn" type="submit">봉인 복구</button>
+        <button class="btn" type="submit">잠금 복구</button>
         <p class="restore-msg" id="restore-msg" hidden></p>
       </form>`;
     $('#restore-form').addEventListener('submit', (e) => {
@@ -348,8 +348,8 @@ function applySealUi() {
   }
 }
 
-// ── 봉인 복구 (감독관 승인) ──
-// 감독관이 빨간 QR을 스캔해 알려 준 6자리 코드가 맞으면 봉인을 다시 건다.
+// ── 잠금 복구 (감독관 승인) ──
+// 감독관이 빨간 QR을 스캔해 알려 준 6자리 코드가 맞으면 잠금을 다시 건다.
 // 해제 기록은 지우지 않고 history에 남기며, 복구 횟수는 QR에 들어가 감독관에게 보인다. (계산 방법: lib/restore-code.js)
 async function restoreSeal(input) {
   const msg = $('#restore-msg');
@@ -411,7 +411,7 @@ function setupHoldToEnd() {
 }
 
 async function endExam() {
-  // 감시를 먼저 끈 뒤 전체화면을 나간다 → '종료'가 '봉인 해제'로 기록되지 않게
+  // 감시를 먼저 끈 뒤 전체화면을 나간다 → '종료'가 '잠금 해제'로 기록되지 않게
   exam.watchers?.abort();
   exam.guards?.abort();
   $('#blocker')?.remove();
@@ -432,23 +432,23 @@ function showSummary() {
 
   app.innerHTML = `
     <p class="eyebrow">시험 종료</p>
-    <h2>봉인 기록</h2>
+    <h2>잠금 기록</h2>
     <div class="result ${clean ? 'ok' : 'bad'}">
-      ${clean ? '봉인 이상 없음' : '봉인 해제 기록 있음'}
+      ${clean ? '잠금 이상 없음' : '잠금 해제 기록 있음'}
       <div class="small">${clean
-        ? (seal.restoreCount ? `실수로 풀린 봉인을 감독관 승인으로 ${seal.restoreCount}회 복구했습니다.` : '시험 시간 동안 봉인이 한 번도 풀리지 않았습니다.')
+        ? (seal.restoreCount ? `실수로 풀린 잠금을 감독관 승인으로 ${seal.restoreCount}회 복구했습니다.` : '시험 시간 동안 잠금이 한 번도 풀리지 않았습니다.')
         : `${formatTime(seal.releasedAt)} · ${escapeHtml(seal.releaseReason)}`}</div>
     </div>
     <div class="card" style="margin-top:12px">
       <dl class="summary">
         <dt>응시자</dt><dd>${escapeHtml(credential.name)} (${credential.examNo})</dd>
-        <dt>봉인 시작</dt><dd>${formatTime(seal.sealStart)}</dd>
+        <dt>잠금 시작</dt><dd>${formatTime(seal.sealStart)}</dd>
         ${clean ? '' : `
-          <dt>봉인 해제</dt><dd>${formatTime(seal.releasedAt)}</dd>
+          <dt>잠금 해제</dt><dd>${formatTime(seal.releasedAt)}</dd>
           <dt>해제 원인</dt><dd>${escapeHtml(seal.releaseReason)}</dd>`}
-        ${seal.restoreCount ? `<dt>봉인 복구</dt><dd>${seal.restoreCount}회 · 감독관 승인 (마지막 ${formatTime(seal.restoredAt)})</dd>` : ''}
+        ${seal.restoreCount ? `<dt>잠금 복구</dt><dd>${seal.restoreCount}회 · 감독관 승인 (마지막 ${formatTime(seal.restoredAt)})</dd>` : ''}
         <dt>시험 종료</dt><dd>${formatTime(seal.endedAt)}</dd>
-        <dt>봉인 유지</dt><dd>${formatDuration(sealEnd - seal.sealStart)}</dd>
+        <dt>잠금 유지</dt><dd>${formatDuration(sealEnd - seal.sealStart)}</dd>
       </dl>
     </div>
     <a class="btn secondary" href="./test.html">데모 다시 하기 (테스트 도구에서 초기화)</a>`;
