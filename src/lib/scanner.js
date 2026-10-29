@@ -40,7 +40,8 @@ export function createScanner(video, onText) {
       },
     });
     video.srcObject = stream;
-    await video.play();
+    // 재생 시작이 잠깐 늦거나 중단돼도 카메라는 이미 열렸으므로 오류로 보지 않는다 (autoplay가 이어서 재생)
+    await video.play().catch(() => {});
     // 가까이 댔을 때 초점을 계속 맞추게 한다 (지원하는 폰만)
     const [track] = stream.getVideoTracks();
     track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});

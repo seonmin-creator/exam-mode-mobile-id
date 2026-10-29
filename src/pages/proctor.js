@@ -49,10 +49,19 @@ async function startScanner() {
     await scanner.start();
   } catch (err) {
     console.error(err);
-    showReaderMsg(window.isSecureContext
-      ? '카메라를 열 수 없습니다. 카메라 권한을 허용한 뒤 다시 시도해 주세요.'
-      : '카메라는 https 주소에서만 작동합니다.');
+    showReaderMsg(cameraErrorText(err));
     $('#camera-btn').hidden = false;
+  }
+}
+
+// 카메라를 못 연 이유를 알아보기 쉽게 알려 준다
+function cameraErrorText(err) {
+  if (!window.isSecureContext) return '카메라는 https 주소에서만 작동합니다.';
+  switch (err?.name) {
+    case 'NotAllowedError': return '카메라 권한이 막혀 있습니다. 주소창 왼쪽 자물쇠 → 카메라 → 허용 후 [카메라 시작]을 눌러 주세요.';
+    case 'NotReadableError': return '다른 앱이나 다른 탭이 카메라를 쓰고 있습니다. 그 앱·탭을 닫고 [카메라 시작]을 눌러 주세요.';
+    case 'NotFoundError': case 'OverconstrainedError': return '이 기기에서 쓸 수 있는 카메라를 찾지 못했습니다.';
+    default: return `카메라를 열 수 없습니다 (${err?.name || err}). [카메라 시작]을 다시 눌러 주세요.`;
   }
 }
 
