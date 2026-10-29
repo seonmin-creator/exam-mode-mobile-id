@@ -36,8 +36,8 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        theme_color: '#1b3a6b',
-        background_color: '#1b3a6b',
+        theme_color: '#0b0b0b',
+        background_color: '#0b0b0b',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -45,8 +45,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // 미리 저장할 파일: 모든 HTML·JS·CSS, 아바타 SVG, 아이콘 PNG (매니페스트는 자동 포함)
-        globPatterns: ['**/*.{html,js,css,svg,png}'],
+        // 미리 저장할 파일: 모든 HTML·JS·CSS, 아이콘 PNG, 글꼴(woff2) (매니페스트는 자동 포함)
+        globPatterns: ['**/*.{html,js,css,svg,png,woff2}'],
         // 여러 페이지 사이트이므로 모르는 주소를 index.html로 돌리지 않는다.
         // student.html은 student.html 그대로, proctor.html은 proctor.html 그대로 캐시에서 연다.
         navigateFallback: null,

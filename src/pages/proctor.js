@@ -11,6 +11,7 @@ import { verifyQr, CHECKS } from '../lib/verify.js';
 import { dbGet, dbSet } from '../lib/db.js';
 import { formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
 import { registerQuietly } from '../lib/pwa.js';
+import { makeRestoreCode } from '../lib/restore-code.js';
 
 // 오프라인용 서비스 워커 등록 (이 화면에서는 업데이트 안내·자동 새로고침을 하지 않음)
 registerQuietly();
@@ -139,7 +140,8 @@ function showResult(r) {
     return `<li class="${cls}"><span>${mark}</span>${label}</li>`;
   }).join('');
 
-  $('#result-body').innerHTML = r.verdict === 'valid' ? validHtml(r) : personLine(r);
+  $('#result-body').innerHTML = r.verdict === 'valid' ? validHtml(r) : personLine(r) + restoreHtml(r);
+  $('#restore-btn')?.addEventListener('click', () => showRestoreCode(r));
 
   // 3초 뒤 자동으로 스캔 대기로 (화면을 누르면 멈춤 → 얼굴 대조할 시간 확보)
   const bar = $('#auto-bar');
@@ -169,6 +171,7 @@ function validHtml({ credential, payload }) {
         <dt>좌석</dt><dd>${escapeHtml(credential.seat)}</dd>
         <dt>봉인 시작</dt><dd>${formatTime(payload.sealStart)}</dd>
         <dt>봉인 유지</dt><dd>${formatDuration(payload.time - payload.sealStart)}</dd>
+        ${payload.restoreCount ? `<dt>봉인 복구</dt><dd>${payload.restoreCount}회 · 감독관 승인 (마지막 ${formatTime(payload.restoredAt)})</dd>` : ''}
       </dl>
     </div>
     ${credential.photoHash ? '<p class="result-note">사진 지문 포함 · 발급 후 바뀐 사진은 응시자 화면에 경고 표시</p>' : ''}`;
@@ -178,6 +181,29 @@ function validHtml({ credential, payload }) {
 function personLine({ credential }) {
   if (!credential?.name) return '';
   return `<p class="result-person">${escapeHtml(credential.name)} · ${escapeHtml(credential.examNo ?? '')}</p>`;
+}
+
+// ── 봉인 복구 (감독관 승인) ──
+// '봉인 해제됨' 판정은 서명·시각이 모두 진짜인 QR에서만 나온다 → 이 QR의 해제 시각은 믿을 수 있다.
+// 감독관이 사정을 확인하고 실수라고 판단하면 6자리 복구 코드를 만들어 응시자에게 알려 준다. (lib/restore-code.js)
+function restoreHtml(r) {
+  if (r.verdict !== 'unsealed' || !r.payload?.releasedAt) return '';
+  return `
+    <div class="restore-box" id="restore-box">
+      <p>실수로 풀린 경우(알림창을 잘못 내림 등), 응시자 사정을 확인한 뒤 복구 코드를 알려 주세요.</p>
+      <button class="btn restore-btn" id="restore-btn" type="button">봉인 복구 코드 만들기</button>
+    </div>`;
+}
+
+async function showRestoreCode(r) {
+  stopAutoClose(); // 코드를 알려 주는 동안 결과 화면이 닫히지 않게
+  const code = await makeRestoreCode(r.credential.examNo, r.payload.releasedAt);
+  $('#restore-box').innerHTML = `
+    <span class="small">봉인 복구 코드 · ${escapeHtml(r.credential.name)}</span>
+    <strong class="restore-code">${code.slice(0, 3)} ${code.slice(3)}</strong>
+    <p>응시자 화면의 빨간 상자에 이 6자리를 입력하면 봉인이 복구됩니다.<br>
+    해제 기록은 지워지지 않고, 다음 스캔 때 '봉인 복구 1회'로 표시됩니다.</p>`;
+  addLog({ ...r, level: 'orange', title: '봉인 복구 코드 발급' });
 }
 
 function closeResult() {
@@ -195,12 +221,16 @@ $('#rescan-btn').addEventListener('click', (e) => {
 // 결과 화면을 누르면 자동 닫힘을 멈춘다
 $('#result').addEventListener('pointerdown', (e) => {
   if (e.target.closest('#rescan-btn')) return;
+  stopAutoClose();
+});
+
+function stopAutoClose() {
   clearTimeout(closeTimer);
   const bar = $('#auto-bar');
   bar.style.transition = 'none';
   bar.style.width = '0%';
   $('#auto-hint').textContent = '자동 닫힘을 멈췄습니다 · [다시 스캔]을 누르세요';
-});
+}
 
 // ── 확인 기록 ──
 async function addLog(r) {

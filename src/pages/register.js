@@ -90,7 +90,7 @@ function showPhotoStep(info) {
     <p class="eyebrow">2 / 3 · 증명사진</p>
     <h2>${escapeHtml(info.name)} 님 증명사진</h2>
     <p class="lead">밝은 곳에서 얼굴 정면이 잘 보이게 찍어 주세요. 감독관이 이 사진과 얼굴을 대조합니다.</p>
-    <div class="photo-frame" id="photo-frame">
+    <div class="photo-frame bracket" id="photo-frame">
       <img id="photo-preview" alt="증명사진 미리보기" hidden />
       <div class="photo-empty" id="photo-empty">사진 없음</div>
     </div>

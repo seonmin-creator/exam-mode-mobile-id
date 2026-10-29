@@ -1,0 +1,4 @@
+이 폴더의 글꼴은 모두 SIL Open Font License 1.1 로 배포되며, 오프라인에서도 쓰기 위해 사이트에 함께 넣었습니다.
+- Pretendard (Kil Hyung-jin) — https://github.com/orioncactus/pretendard  (KS X 1001 글자 subset: Regular·SemiBold·Bold)
+- Russo One (Jovanny Lemonad) — https://fonts.google.com/specimen/Russo+One
+- JetBrains Mono (JetBrains) — https://www.jetbrains.com/lp/mono/

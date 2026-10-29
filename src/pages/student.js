@@ -13,6 +13,7 @@ import { buildSignedQr } from '../lib/qr-format.js';
 import { dbGet, dbSet } from '../lib/db.js';
 import { unlockAlarm, playAlarm } from '../lib/alarm.js';
 import { photoHash } from '../lib/photo.js';
+import { checkRestoreCode } from '../lib/restore-code.js';
 import { formatTime, formatBirth, escapeHtml, $ } from '../lib/util.js';
 import { registerQuietly } from '../lib/pwa.js';
 
@@ -258,6 +259,8 @@ async function refreshQr() {
         sealed: seal.status === 'active',
         releasedAt: seal.releasedAt,
         releaseReason: seal.releaseReason,
+        restoreCount: seal.restoreCount,
+        restoredAt: seal.restoredAt,
       },
     });
     if (!exam) return; // 그사이 시험이 끝났으면 그리지 않음
@@ -324,12 +327,63 @@ async function breakSeal(reason) {
 function applySealUi() {
   const broken = seal.status === 'broken';
   document.body.classList.toggle('broken', broken);
-  $('#seal-status').textContent = broken ? '봉인 해제됨' : '시험 모드 · 봉인 유지 중';
+  $('#seal-status').textContent = broken
+    ? '봉인 해제됨'
+    : `시험 모드 · 봉인 유지 중${seal.restoreCount ? ` (복구 ${seal.restoreCount}회)` : ''}`;
   const info = $('#broken-info');
   info.hidden = !broken;
   if (broken) {
-    info.innerHTML = `<strong>봉인 해제됨</strong>해제 시각 ${formatTime(seal.releasedAt)}<br>원인: ${escapeHtml(seal.releaseReason)}`;
+    info.innerHTML = `
+      <strong>봉인 해제됨</strong>해제 시각 ${formatTime(seal.releasedAt)}<br>원인: ${escapeHtml(seal.releaseReason)}
+      <form class="restore" id="restore-form">
+        <p>실수로 풀렸다면 감독관에게 이 QR을 보여 주세요. 감독관이 알려 주는 <b>복구 코드 6자리</b>를 입력하면 봉인이 복구됩니다.</p>
+        <input id="restore-code" inputmode="numeric" autocomplete="off" maxlength="7" placeholder="000000" aria-label="복구 코드 6자리" />
+        <button class="btn" type="submit">봉인 복구</button>
+        <p class="restore-msg" id="restore-msg" hidden></p>
+      </form>`;
+    $('#restore-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      restoreSeal($('#restore-code').value);
+    });
   }
+}
+
+// ── 봉인 복구 (감독관 승인) ──
+// 감독관이 빨간 QR을 스캔해 알려 준 6자리 코드가 맞으면 봉인을 다시 건다.
+// 해제 기록은 지우지 않고 history에 남기며, 복구 횟수는 QR에 들어가 감독관에게 보인다. (계산 방법: lib/restore-code.js)
+async function restoreSeal(input) {
+  const msg = $('#restore-msg');
+  const say = (text) => { msg.hidden = false; msg.textContent = text; };
+
+  // 통신이 연결된 채로 복구하면 곧바로 다시 풀리므로 비행기 모드부터 확인
+  if (navigator.onLine) return say('먼저 비행기 모드를 다시 켜고 와이파이를 꺼 주세요.');
+  if (!(await checkRestoreCode(credential.examNo, seal.releasedAt, input))) {
+    playAlarm();
+    return say('복구 코드가 맞지 않습니다. 감독관에게 다시 확인해 주세요.');
+  }
+
+  // 버튼을 누른 이 순간에 전체화면·소리를 다시 허락받는다
+  requestFullscreen();
+  unlockAlarm();
+
+  const now = Date.now();
+  seal = {
+    ...seal,
+    status: 'active',
+    history: [...(seal.history ?? []), { releasedAt: seal.releasedAt, releaseReason: seal.releaseReason, restoredAt: now }],
+    restoreCount: (seal.restoreCount ?? 0) + 1,
+    restoredAt: now,
+    releasedAt: null,
+    releaseReason: null,
+  };
+  await dbSet('seal', seal);
+
+  // 새로고침으로 풀린 경우에는 감시가 꺼져 있으므로 다시 켠다
+  if (!exam.watchers) startWatchers();
+  if (!exam.wakeLock) requestWakeLock();
+  applySealUi();
+  refreshQr(); // 복구 사실을 담은 QR로 바로 바꿈
+  exam.countdown = QR_INTERVAL;
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -382,7 +436,7 @@ function showSummary() {
     <div class="result ${clean ? 'ok' : 'bad'}">
       ${clean ? '봉인 이상 없음' : '봉인 해제 기록 있음'}
       <div class="small">${clean
-        ? '시험 시간 동안 봉인이 한 번도 풀리지 않았습니다.'
+        ? (seal.restoreCount ? `실수로 풀린 봉인을 감독관 승인으로 ${seal.restoreCount}회 복구했습니다.` : '시험 시간 동안 봉인이 한 번도 풀리지 않았습니다.')
         : `${formatTime(seal.releasedAt)} · ${escapeHtml(seal.releaseReason)}`}</div>
     </div>
     <div class="card" style="margin-top:12px">
@@ -392,6 +446,7 @@ function showSummary() {
         ${clean ? '' : `
           <dt>봉인 해제</dt><dd>${formatTime(seal.releasedAt)}</dd>
           <dt>해제 원인</dt><dd>${escapeHtml(seal.releaseReason)}</dd>`}
+        ${seal.restoreCount ? `<dt>봉인 복구</dt><dd>${seal.restoreCount}회 · 감독관 승인 (마지막 ${formatTime(seal.restoredAt)})</dd>` : ''}
         <dt>시험 종료</dt><dd>${formatTime(seal.endedAt)}</dd>
         <dt>봉인 유지</dt><dd>${formatDuration(sealEnd - seal.sealStart)}</dd>
       </dl>
@@ -427,7 +482,7 @@ function idCardHtml() {
 function setWatermark() {
   const text = `시험 모드 · ${credential.examNo} · 실시간`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="70">
-    <text x="6" y="44" font-size="14" font-weight="700" font-family="sans-serif" fill="#1b3a6b"
+    <text x="6" y="44" font-size="14" font-weight="700" font-family="sans-serif" fill="#f4f4f2"
       transform="rotate(-12 110 35)">${text}</text></svg>`;
   $('#watermark').style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }

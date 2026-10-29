@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// 앱 아이콘 만들기 (남색 배경 + 흰 방패 + 남색 체크 표시)
+// 앱 아이콘 만들기 (검정 배경 + 흰 방패 + 검정 체크 표시)
 //   실행: node scripts/generate-icons.mjs  →  public/icons/ 에 PNG 3개 생성
 //   그림 라이브러리 없이 점을 하나씩 찍어 PNG로 저장한다. (정부 로고 아님)
 // ─────────────────────────────────────────────────────────────
@@ -7,7 +7,7 @@ import { deflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const NAVY = [0x1b, 0x3a, 0x6b];
+const NAVY = [0x0b, 0x0b, 0x0b]; // 배경색 (사이트와 같은 검정)
 const WHITE = [0xff, 0xff, 0xff];
 const SAMPLES = 4; // 가장자리를 부드럽게: 한 점을 4×4로 나눠 평균
 

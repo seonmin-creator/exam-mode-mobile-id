@@ -10,6 +10,8 @@
 //     sealed           : 봉인 상태 (true/false)
 //     releasedAt       : 봉인 해제 시각 (없으면 null)
 //     releaseReason    : 봉인 해제 원인 (없으면 null)
+//     restoreCount     : 감독관이 봉인을 복구해 준 횟수 (복구한 적이 있을 때만)
+//     restoredAt       : 마지막 복구 시각 (복구한 적이 있을 때만)
 //   }
 //   → payload 전체를 '기기 키'로 서명 → { payload, deviceSignature }
 //   → JSON을 '사전 압축' → base45 글자로 바꿔서 QR로 그림  (머리말 "EXM2.")
@@ -49,7 +51,7 @@ const DICTIONARY = encoder.encode(JSON.stringify({
 // 서명된 QR 글자를 만든다.
 //   issued    : { credentialText, issuerSignature }  (예비소집 때 받은 신분증)
 //   deviceKey : 기기 개인키
-//   seal      : { sealStart, sealed, releasedAt, releaseReason }
+//   seal      : { sealStart, sealed, releasedAt, releaseReason, restoreCount?, restoredAt? }
 //   now       : QR에 넣을 시각 (기본값: 지금) — 테스트 도구에서 '오래된 QR'을 만들 때 바꿔 씀
 export async function buildSignedQr({ issued, deviceKey, seal, now = Date.now() }) {
   const payloadText = JSON.stringify({
@@ -60,6 +62,8 @@ export async function buildSignedQr({ issued, deviceKey, seal, now = Date.now() 
     sealed: seal.sealed,
     releasedAt: seal.releasedAt ?? null,
     releaseReason: seal.releaseReason ?? null,
+    // 감독관이 봉인을 복구해 준 적이 있으면 그 횟수와 마지막 시각 (기기 서명 안에 들어가 숨길 수 없음)
+    ...(seal.restoreCount ? { restoreCount: seal.restoreCount, restoredAt: seal.restoredAt } : {}),
   });
 
   // 기기 키로 payload 전체에 서명 → 시각·봉인 상태를 몰래 바꾸면 검증 실패

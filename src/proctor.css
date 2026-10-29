@@ -13,7 +13,7 @@
   border-bottom: 1px solid var(--line);
 }
 .status-bar .small { display: block; font-size: 12px; }
-.status-bar strong { font-size: 24px; color: var(--navy-dark); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.status-bar strong { font-size: 22px; font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; line-height: 1.2; }
 .net-chip {
   font-size: 12px;
   font-weight: 700;
@@ -30,7 +30,7 @@
   position: relative;
   border-radius: var(--radius);
   overflow: hidden;
-  background: #0d1420;
+  background: #000;
   min-height: 260px;
 }
 /* 카메라는 정사각형으로 보여 준다 → 화면에 보이는 가운데가 그대로 해독 영역 */
@@ -38,9 +38,18 @@
 .scan-guide {
   position: absolute;
   inset: 5%;
-  border: 3px solid rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.25);
+  /* 카메라 뷰파인더처럼 네 귀퉁이만 표시 */
+  --c: rgba(255, 255, 255, 0.95);
+  background:
+    linear-gradient(var(--c), var(--c)) top left / 30px 3px no-repeat,
+    linear-gradient(var(--c), var(--c)) top left / 3px 30px no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / 30px 3px no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / 3px 30px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / 30px 3px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / 3px 30px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / 30px 3px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / 3px 30px no-repeat;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.3);
   pointer-events: none;
 }
 .scan-tip { font-size: 13px; color: var(--muted); text-align: center; margin: 8px 0 0; }
@@ -83,7 +92,7 @@
 .log-result.level-green { background: var(--ok-soft); color: var(--ok); }
 .log-result.level-red { background: var(--bad-soft); color: var(--bad); }
 .log-result.level-orange { background: var(--warn-soft); color: var(--warn); }
-.log-result.level-gray { background: #eef1f5; color: var(--muted); }
+.log-result.level-gray { background: var(--surface-2); color: var(--muted); }
 .log-list li.log-empty { display: block; color: var(--muted); text-align: center; }
 
 /* 판정 결과: 화면 전체 배경색 */
@@ -156,7 +165,7 @@
 .person dd.name { font-size: 24px; }
 .result-note { margin: 8px 0 0; font-size: 13px; opacity: 0.85; }
 
-.result-screen .btn { background: #fff; color: var(--navy-dark); margin-top: 18px; }
+.result-screen .btn { background: #fff; border-color: #fff; color: #0b0b0b; margin-top: 18px; }
 .auto-close { height: 4px; background: rgba(255, 255, 255, 0.25); border-radius: 2px; margin-top: 12px; overflow: hidden; }
 .auto-close i { display: block; height: 100%; width: 100%; background: #fff; }
 .auto-hint { font-size: 13px; text-align: center; opacity: 0.85; margin: 6px 0 0; }
@@ -171,7 +180,7 @@
 }
 .room-view { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .room-view .small { display: block; }
-.room-view strong { font-size: 17px; color: var(--navy-dark); }
+.room-view strong { font-size: 17px; color: var(--fg); }
 .room-card .form { margin: 0; }
 .room-card .form .small { margin: 0; }
 
@@ -188,3 +197,27 @@
 .camera-help[hidden] { display: none; }
 .camera-help strong { display: block; color: var(--warn); font-size: 15px; margin-bottom: 4px; }
 .camera-help p { margin: 6px 0 0; }
+
+/* 봉인 복구 (빨간 결과 화면 안) */
+.restore-box {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.18);
+}
+.restore-box p { margin: 0; font-size: 14px; line-height: 1.55; opacity: 0.95; }
+.restore-box .small { color: #fff; opacity: 0.85; font-family: var(--mono); letter-spacing: 0.08em; }
+.result-screen .restore-btn { margin-top: 12px; background: transparent; color: #fff; border-color: #fff; }
+.restore-code {
+  display: block;
+  margin: 6px 0 10px;
+  font-family: var(--mono);
+  font-size: 48px;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+  color: #fff;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 0;
+}

@@ -4,9 +4,11 @@
 
 /* 시연용 표시 띠 */
 .test-banner {
-  background: #fff4e0;
-  color: #8a4b00;
-  border-bottom: 1px solid #f1d3a6;
+  background: #1d1208;
+  color: #ffb547;
+  border-bottom: 1px solid #3d2a12;
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
   text-align: center;
   font-size: 13px;
   font-weight: 700;
@@ -34,10 +36,12 @@
   flex: none;
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  background: var(--navy);
-  color: #fff;
-  font-weight: 700;
+  border-radius: var(--radius);
+  background: transparent;
+  border: 1px solid var(--line-2);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-weight: 400;
   display: grid;
   place-items: center;
   font-size: 14px;
@@ -47,11 +51,12 @@
 .case-line { font-size: 14px; color: var(--muted); line-height: 1.4; }
 
 /* 판정 색 (감독관 화면과 같은 4가지) */
-.level-green { --lv: #18794a; --lv-soft: #e6f4ec; }
-.level-red { --lv: #b42323; --lv-soft: #fbe9e9; }
-.level-orange { --lv: #c26410; --lv-soft: #fdf0e1; }
-.level-gray { --lv: #4b5563; --lv-soft: #eef1f5; }
-.chip { font-style: normal; font-weight: 700; padding: 1px 7px; border-radius: 6px; background: var(--lv-soft); color: var(--lv); }
+/* --lv: 글씨·테두리 색 (어두운 배경에서 잘 보이게 밝게), --lv-solid: 꽉 찬 배경 색, --lv-soft: 옅은 배경 */
+.level-green { --lv: #7cff6b; --lv-solid: #18794a; --lv-soft: rgba(124, 255, 107, 0.1); }
+.level-red { --lv: #ff6b61; --lv-solid: #b42323; --lv-soft: rgba(255, 59, 48, 0.12); }
+.level-orange { --lv: #ffb547; --lv-solid: #c26410; --lv-soft: rgba(255, 181, 71, 0.12); }
+.level-gray { --lv: #b5b5b0; --lv-solid: #4b5563; --lv-soft: rgba(255, 255, 255, 0.06); }
+.chip { font-style: normal; font-weight: 700; padding: 1px 7px; border-radius: var(--radius); background: var(--lv-soft); color: var(--lv); }
 
 /* 선택한 QR */
 .qr-panel {
@@ -90,7 +95,7 @@
   margin-top: 12px;
   border-radius: var(--radius);
   padding: 14px;
-  background: var(--lv);
+  background: var(--lv-solid);
   color: #fff;
 }
 .self-result[hidden] { display: none; }
@@ -108,7 +113,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
 }
-.check-list li.fail { background: #fff; color: var(--lv); }
+.check-list li.fail { background: #fff; color: var(--lv-solid); }
 .check-list li.skip { opacity: 0.55; }
 
 .reset-card { margin-top: 28px; }
